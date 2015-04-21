@@ -1,0 +1,28 @@
+{
+	"name": "recache",
+	"version": "0.1.0",
+	"description": "File system cache that listens to file changes",
+	"main": "index",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/micnic/recache"
+	},
+	"keywords": [
+		"cache",
+		"fs"
+	],
+	"author": {
+		"name": "Micleusanu Nicu",
+		"email": "micnic90@gmail.com",
+		"url": "https://github.com/micnic"
+	},
+	"license": "GPL-3.0",
+	"bugs": {
+		"url": "https://github.com/micnic/recache/issues"
+	},
+	"homepage": "http://micnic.github.io/recache",
+	"engines": {
+		"iojs": ">=1.0",
+		"node": ">=0.10"
+	}
+}
