@@ -1,6 +1,8 @@
 <img src="https://raw.github.com/micnic/recache/master/logo.png"/>
 # 0.2.0
 
+[![Join the chat at https://gitter.im/micnic/recache](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/micnic/recache?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 [![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/micnic/recache)
 
 recache is a file system cache which loads the provided folder or file into the memory, recursively watches the folder tree and updates the data on changes. It provides the content, the stats and any meta data defined for each element stored in the cache.
