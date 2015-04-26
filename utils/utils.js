@@ -64,14 +64,31 @@ utils.addFile = function (instance, location, callback) {
 	});
 };
 
+// Partial polyfill for ES6 Object.assign
+utils.assign = function (target, source) {
+
+	// Check if the source is an object and copy its properties
+	if (utils.isObject(source)) {
+		Object.keys(source).forEach(function (key) {
+			target[key] = source[key];
+		});
+	}
+
+	return target;
+};
+
+// Create a new object element in the cache container
+utils.createElement = function (instance, location, stats) {
+	instance.container[location] = {
+		data: {},
+		location: location,
+		stats: stats
+	};
+};
+
 // Check for an object value
 utils.isObject = function (value) {
 	return Object.prototype.toString.call(value) === '[object Object]';
-};
-
-// Check for a regular expression
-utils.isRegExp = function (value) {
-	return Object.prototype.toString.call(value) === '[object RegExp]';
 };
 
 // Read the content of the directory
@@ -93,13 +110,9 @@ utils.readDirectory = function (instance, location, callback) {
 			// Check for a defined element and add it to the cache
 			if (element) {
 
-				// Check if the element is accepted by the filter
-				if (instance.filter.test(element)) {
-					joined = location + '/' + element;
-					utils.updateElement(instance, joined, getNext);
-				} else {
-					getNext();
-				}
+				// Update the current element
+				joined = location + '/' + element;
+				utils.updateElement(instance, joined, getNext);
 
 				// Get the index of the next file
 				index++;
@@ -200,9 +213,8 @@ utils.updateElement = function (instance, location, callback) {
 	// Get the stats of the element
 	fs.stat(location, function (error, stats) {
 
-		var element = instance.container[rpath],
-			existent = true,
-			modified = true;
+		var basename = path.basename(location),
+			element = instance.container[rpath];
 
 		// Check for possible errors
 		if (error) {
@@ -216,38 +228,31 @@ utils.updateElement = function (instance, location, callback) {
 			// Prepare the object of the element
 			if (element) {
 				if (Number(element.stats.mtime) === Number(stats.mtime)) {
-					modified = false;
+					callback();
 				} else {
+
+					// Update the current element stats
 					element.stats = stats;
-				}
-			} else {
 
-				// Create a new element object
-				instance.container[rpath] = {
-					data: {},
-					location: rpath,
-					stats: stats
-				};
-
-				// Set the existence flag
-				existent = false;
-			}
-
-			// Update or create a new element object
-			if (existent) {
-				if (modified) {
+					// Update the cached object
 					if (stats.isDirectory()) {
 						utils.updateDirectory(instance, location, callback);
 					} else {
 						utils.updateFile(instance, location, callback);
 					}
+				}
+			} else {
+
+				// Filter the elements and add them to the cache
+				if (stats.isDirectory() && instance.dirs.test(basename)) {
+					utils.createElement(instance, rpath, stats);
+					utils.addDirectory(instance, location, callback);
+				} else if (stats.isFile() && instance.files.test(basename)) {
+					utils.createElement(instance, rpath, stats);
+					utils.addFile(instance, location, callback);
 				} else {
 					callback();
 				}
-			} else if (stats.isDirectory()) {
-				utils.addDirectory(instance, location, callback);
-			} else {
-				utils.addFile(instance, location, callback);
 			}
 		}
 	});

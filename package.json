@@ -1,6 +1,6 @@
 {
 	"name": "recache",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"description": "File system cache that listens to file changes",
 	"main": "index",
 	"repository": {
@@ -9,7 +9,8 @@
 	},
 	"keywords": [
 		"cache",
-		"fs"
+		"fs",
+		"simple"
 	],
 	"author": {
 		"name": "Micleusanu Nicu",

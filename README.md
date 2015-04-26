@@ -1,5 +1,5 @@
 <img src="https://raw.github.com/micnic/recache/master/logo.png"/>
-# 0.1.0
+# 0.2.0
 
 [![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/micnic/recache)
 
@@ -27,7 +27,7 @@ options: object
 
 callback: function
 
-`recache` can cache directories and files based on the provided location. Directories are recursively traversed, their content is loaded into the memory and watched for changes. Two options can be defined for the cache: `filter` - a regular expression to define the files that may be cached (by default all files contained by the provided directory are cached) and `persistent` - a boolean value to define if the process should continue while the cache is watching for changes. The last argument is callback function which is executed only once, in the beggining when all the files and directories are loaded in the memory (`ready` event). `recache` should be used only with directories and files which are used often in a certain process, but not frequently modified, thus speeding up the access to the stored files and directories. Note that the stored content should not surpass the available memory.
+`recache` can cache directories and files based on the provided location. Directories are recursively traversed, their content is loaded into the memory and watched for changes. Three options can be defined for the cache: `files` and `dirs` - regular expressions or a strings to define the patterns of the names of the files or the directories that should be cached (by default all files and directories contained by the provided directory are cached) and `persistent` - a boolean value to define if the process should continue while the cache is watching for changes. The last argument is callback function which is executed only once, in the beginning when all the files and directories are loaded in the memory (`ready` event). `recache` should be used only with directories and files which are used often in a certain process, but not frequently modified, thus speeding up the access to the stored files and directories. Note that the stored content should not surpass the available memory.
 
 Emitted events:
 
@@ -35,7 +35,7 @@ Emitted events:
 
 `ready` - when all the files and directories are loaded for the first time
 
-`update` - after one or multiple changes were made inside the cache
+`update` - when one or multiple changes were made inside the cache
 
 `directory` - when a new directory is added to the cache, provides the directory object as the callback argument
 
@@ -65,7 +65,8 @@ Destroy the cached data.
 var recache = require('recache');
 
 var cache = recache('static_files', {
-    filter: /^(?!\.).+$/,   // filter for hidden files, default is /^.+$/i
+    dirs: /^(?!\.).+$/,     // filter for hidden directories, default is /^.+$/i
+    files: /^.+\.txt$/,     // filter for files that have the extension "txt", default is /^.+$/i
     persistent: true        // make persistent cache, default is false
 }, function () {
     console.log('Cache ready !!!');

@@ -6,29 +6,42 @@ var events = require('events'),
 // Recache prototype constructor
 var recache = function (location, options, callback) {
 
-	var filter = /^.+$/i,
-		persistent = false,
-		that = this;
+	var that = this;
 
 	// Call events.EventEmitter in this context
 	events.EventEmitter.call(this);
 
-	// Make the options an optional argument
+	// Set the default location
+	if (typeof location !== 'string') {
+		location = '';
+	}
+
+	// Make the options and the callback optional arguments
 	if (typeof options === 'function') {
 		callback = options;
 		options = {};
-	} else if (!utils.isObject(options)) {
-		options = {};
+	}
+
+	// Set the default options object
+	options = utils.assign({}, options);
+
+	// Use only regular expressions for filter
+	if (typeof options.dirs === 'string') {
+		options.dirs = RegExp(options.dirs, 'i');
+	} else if (!(options.dirs instanceof RegExp)) {
+		options.dirs = /^.+$/i;
 	}
 
 	// Use only regular expressions for filter
-	if (options.filter !== undefined && !utils.isRegExp(options.filter)) {
-		filter = RegExp(String(options.filter), 'i');
+	if (typeof options.files === 'string') {
+		options.files = RegExp(options.files, 'i');
+	} else if (!(options.files instanceof RegExp)) {
+		options.files = /^.+$/i;
 	}
 
 	// Accept only true value for persistent
-	if (options.persistent === true) {
-		persistent = true;
+	if (options.persistent !== true) {
+		options.persistent = false;
 	}
 
 	// Transform the location in posix format
@@ -40,8 +53,11 @@ var recache = function (location, options, callback) {
 			value: {},
 			writable: true
 		},
-		filter: {
-			value: filter
+		dirs: {
+			value: options.dirs
+		},
+		files: {
+			value: options.files
 		},
 		location: {
 			value: location,
@@ -49,7 +65,7 @@ var recache = function (location, options, callback) {
 		},
 		options: {
 			value: {
-				persistent: persistent
+				persistent: options.persistent
 			}
 		},
 		ready: {
