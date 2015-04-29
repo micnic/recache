@@ -1,3 +1,6 @@
+## 0.2.1
+- Always emit directory and file events, not only when the cache is ready
+
 ## 0.2.0
 - Added possibility to filter elements using strings
 - Added separated filter options for files and directories

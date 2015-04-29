@@ -16,10 +16,8 @@ utils.addDirectory = function (instance, location, callback) {
 		var timer = null,
 			watcher = fs.watch(location, instance.options);
 
-		// Emit the directory event only when the cache is ready
-		if (instance.ready) {
-			instance.emit('directory', instance.container[rpath]);
-		}
+		// Emit the directory event
+		instance.emit('directory', instance.container[rpath]);
 
 		// Add the fs watcher to the list of watchers
 		instance.watchers[rpath] = watcher;
@@ -54,10 +52,8 @@ utils.addFile = function (instance, location, callback) {
 	// Prepare the file content
 	utils.readFile(instance, location, function () {
 
-		// Emit the file event only when the cache is ready
-		if (instance.ready) {
-			instance.emit('file', instance.container[rpath]);
-		}
+		// Emit the file event
+		instance.emit('file', instance.container[rpath]);
 
 		// Execute the callback
 		callback();

@@ -1,6 +1,6 @@
 {
 	"name": "recache",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"description": "File system cache that listens to file changes",
 	"main": "index",
 	"repository": {

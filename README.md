@@ -1,5 +1,5 @@
 <img src="https://raw.github.com/micnic/recache/master/logo.png"/>
-# 0.2.0
+# 0.2.1
 
 [![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/micnic/recache)
 
