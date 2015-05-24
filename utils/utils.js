@@ -76,7 +76,6 @@ utils.assign = function (target, source) {
 // Create a new object element in the cache container
 utils.createElement = function (instance, location, stats) {
 	instance.container[location] = {
-		data: {},
 		location: location,
 		stats: stats
 	};
@@ -224,7 +223,11 @@ utils.updateElement = function (instance, location, callback) {
 			// Prepare the object of the element
 			if (element) {
 				if (Number(element.stats.mtime) === Number(stats.mtime)) {
-					callback();
+					if (stats.isDirectory()) {
+						utils.readDirectory(instance, location, callback);
+					} else {
+						callback();
+					}
 				} else {
 
 					// Update the current element stats

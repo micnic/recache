@@ -1,3 +1,7 @@
+## 0.3.0
+- Fix modified files not triggering change event
+- Remove `data` member from element object as it is not very used
+
 ## 0.2.1
 - Always emit directory and file events, not only when the cache is ready
 

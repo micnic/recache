@@ -1,9 +1,9 @@
 <img src="https://raw.github.com/micnic/recache/master/logo.png"/>
-# 0.2.1
+# 0.3.0
 
 [![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/micnic/recache)
 
-recache is a file system cache which loads the provided folder or file into the memory, recursively watches the folder tree and updates the data on changes. It provides the content, the stats and any meta data defined for each element stored in the cache.
+recache is a file system cache which loads the provided folder or file into the memory, recursively watches the folder tree and updates the data on changes. It provides the content and the stats for each element stored in the cache.
 
 #### Works with node.js 0.10+ and io.js 1.0+ !
 #### Any feedback is welcome!
@@ -115,7 +115,6 @@ cache.read();
 File
 =>  {
         content: Buffer<00 01 02 ...>
-        data: {},
         location: '',
         stats: {
             atime: ...
@@ -128,7 +127,6 @@ File
 Directory
 =>  {
         content: ['1.txt', '2.txt', '3.txt', ...]
-        data: {},
         location: '',
         stats: {
             atime: ...
