@@ -53,6 +53,10 @@ var recache = function (location, options, callback) {
 			value: {},
 			writable: true
 		},
+		destroyed: {
+			value: false,
+			writable: true
+		},
 		dirs: {
 			value: options.dirs
 		},
@@ -110,6 +114,9 @@ recache.prototype.destroy = function () {
 	Object.keys(this.watchers).forEach(function (key) {
 		that.watchers[key].close();
 	});
+
+	// Mark as destroyed
+	this.destroyed = true;
 
 	// Reset the cache members
 	this.container = null;

@@ -1,3 +1,6 @@
+## 0.3.1
+- Stop caching process if the cache is destroyed while reading files and directories
+
 ## 0.3.0
 - Fix modified files not triggering change event
 - Remove `data` member from element object as it is not very used

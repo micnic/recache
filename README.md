@@ -1,7 +1,8 @@
 <img src="https://raw.github.com/micnic/recache/master/logo.png"/>
-# 0.3.0
 
-[![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/micnic/recache)
+# 0.3.1
+
+[![Gitter](https://badges.gitter.im/recache.png)](https://gitter.im/micnic/recache)
 
 recache is a file system cache which loads the provided folder or file into the memory, recursively watches the folder tree and updates the data on changes. It provides the content and the stats for each element stored in the cache.
 
@@ -9,9 +10,9 @@ recache is a file system cache which loads the provided folder or file into the 
 #### Any feedback is welcome!
 
 #### More simple modules:
-- [simpleR](http://micnic.github.com/simpleR/)
-- [simpleS](http://micnic.github.com/simpleS/)
-- [simpleT](http://micnic.github.com/simpleT/)
+- [simpleR](https://www.npmjs.com/package/simpler)
+- [simpleS](https://www.npmjs.com/package/simples)
+- [simpleT](https://www.npmjs.com/package/simplet)
 
 ## Instalation
 

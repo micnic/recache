@@ -123,7 +123,7 @@ utils.readDirectory = function (instance, location, callback) {
 			} else {
 				instance.emit('error', error);
 			}
-		} else {
+		} else if (!instance.destroyed) {
 			instance.container[rpath].content = files;
 			instance.emit('read', location);
 			getNext();
@@ -144,7 +144,7 @@ utils.readFile = function (instance, location, callback) {
 			} else {
 				instance.emit('error', error);
 			}
-		} else {
+		} else if (!instance.destroyed) {
 			instance.container[rpath].content = content;
 			callback();
 		}
@@ -218,7 +218,7 @@ utils.updateElement = function (instance, location, callback) {
 			} else {
 				instance.emit('error', error);
 			}
-		} else {
+		} else if (!instance.destroyed) {
 
 			// Prepare the object of the element
 			if (element) {
