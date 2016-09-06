@@ -1,3 +1,10 @@
+## 0.4.0
+- Upgrade code to ES6
+- Drop support of Node.js <4.0
+- Add `.list()` method
+- Add `data` member for cache instance and element objects
+- Fix some cases where cache fails to update its content on fast changes
+
 ## 0.3.1
 - Stop caching process if the cache is destroyed while reading files and directories
 

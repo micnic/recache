@@ -1,0 +1,59 @@
+{
+	"env": {
+		"es6": true,
+		"node": true
+	},
+	"extends": "eslint:recommended",
+	"rules": {
+		"curly": [
+			"error"
+		],
+		"eqeqeq": [
+			"error"
+		],
+		"indent": [
+			"error",
+			"tab"
+		],
+		"max-len": [
+			"error",
+			80,
+			4
+		],
+		"max-params": [
+			"error"
+		],
+		"no-console": [
+			"error"
+		],
+		"no-continue": [
+			"error"
+		],
+		"no-shadow": [
+			"error"
+		],
+		"no-ternary": [
+			"error"
+		],
+		"no-var": [
+			"error"
+		],
+		"object-shorthand": [
+			"error"
+		],
+		"prefer-arrow-callback": [
+			"error"
+		],
+		"prefer-const": [
+			"error"
+		],
+		"semi": [
+			"error",
+			"always"
+		],
+		"strict": [
+			"error",
+			"safe"
+		]
+	}
+}

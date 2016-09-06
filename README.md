@@ -1,12 +1,12 @@
 <img src="https://raw.github.com/micnic/recache/master/logo.png"/>
 
-# 0.3.1
+# 0.4.0
 
 [![Gitter](https://badges.gitter.im/recache.png)](https://gitter.im/micnic/recache)
 
 recache is a file system cache which loads the provided folder or file into the memory, recursively watches the folder tree and updates the data on changes. It provides the content and the stats for each element stored in the cache.
 
-#### Works with node.js 0.10+ and io.js 1.0+ !
+#### Works with node.js 4.0+!
 #### Any feedback is welcome!
 
 #### More simple modules:
@@ -24,11 +24,11 @@ recache is a file system cache which loads the provided folder or file into the 
 
 location: string
 
-options: object
+options: { filter: (name: string, stats: fs.Stats) => boolean, persistent: boolean }
 
-callback: function
+callback: (cache: recache.Cache) => void
 
-`recache` can cache directories and files based on the provided location. Directories are recursively traversed, their content is loaded into the memory and watched for changes. Three options can be defined for the cache: `files` and `dirs` - regular expressions or a strings to define the patterns of the names of the files or the directories that should be cached (by default all files and directories contained by the provided directory are cached) and `persistent` - a boolean value to define if the process should continue while the cache is watching for changes. The last argument is callback function which is executed only once, in the beginning when all the files and directories are loaded in the memory (`ready` event). `recache` should be used only with directories and files which are used often in a certain process, but not frequently modified, thus speeding up the access to the stored files and directories. Note that the stored content should not surpass the available memory.
+`recache` can cache directories and files based on the provided location. Directories are recursively traversed, their content is loaded into the memory and watched for changes. Two options can be defined for the cache: `filter` - a function which receives two arguments, the location and the stats of the current element, it has to return a boolean value to filter the names of the files or the directories that should be cached (by default all files and directories contained by the provided directory are cached) and `persistent` - a boolean value to define if the process should continue while the cache is watching for changes (by default the created cache is persistent). The last argument is callback function which is executed only once, in the beginning when all the files and directories are loaded in the memory (`ready` event). `recache` should be used only with directories and files which are used often in a certain process, but not frequently modified, thus speeding up the access to the stored files and directories. Note that the stored content should not surpass the available memory.
 
 Emitted events:
 
@@ -47,14 +47,24 @@ Emitted events:
 `unlink` - when a directory or a file is removed, provides the element object as the callback argument
 
 ```js
-var cache = recache('static_files');
+const cache = recache('static_files');
 ```
+
+`.data`
+
+Metadata about the cache, it is an empty object which should be used by the user.
 
 `.read([location])`
 
 location: string
 
-To read data from the cache `.read()` method is used with a provided relative location to the location of the cached directory. If no location is provided then the object of the object of the cached directory is returned. If the required location was no found then `null` is returned. Each returned object has 4 members: `content` - the content of the element, `data` - an object with metadata which may be filled with any data by the user of the cache, `location` - the relative location of the element inside the cache, `stats` - the fs stats of the required element.
+To read data from the cache `.read()` method is used with a provided relative location to the location of the cached directory. If no location is provided then the object of the cached directory or of the cached file is returned. If the required location was no found then `null` is returned. Each returned object has 4 members: `content` - the content of the element, for directories it is an array of strings which represents the name of the contained files or subdirectories, for files it is a buffer with the content of the file, `data` - the metadata of the element, it is an empty object which may be filled by the user of the cache `location` - the location of the element relative to the root element of the cache, `stats` - the file system stats of the element.
+
+`.list([filter])`
+
+filter: (element: string, index: number, list: string[]) => boolean
+
+To list all possible readable sources `.list()` method is used with an optional parameter to filter elements. If no filter parameter is provided then all readable elements of the cache are returned as an array of strings.
 
 `.destroy()`
 
@@ -63,38 +73,52 @@ Destroy the cached data.
 ## Example
 
 ```js
-var recache = require('recache');
+const recache = require('recache');
 
-var cache = recache('static_files', {
-    dirs: /^(?!\.).+$/,     // filter for hidden directories, default is /^.+$/i
-    files: /^.+\.txt$/,     // filter for files that have the extension "txt", default is /^.+$/i
-    persistent: true        // make persistent cache, default is false
-}, function () {
+const cache = recache('static_files', {
+    filter: (name, stats) => {	                // filter for hidden files, by default all files and directories are cached
+
+        let result = false;
+
+        if (stats.isFile()) {
+            result = /^(?!\.).+$/.test(name);
+        }
+
+        return result;
+    },
+    persistent: true	                        // make persistent cache, default is false
+}, (cache) => {
     console.log('Cache ready !!!');
+
+    // cache.read(...);
 });
 
-cache.on('error', function (error) {
+cache.on('error', (error) => {
     console.log('Something unexpected happened');
     console.log(error.stack);
 });
 
-cache.on('ready', function () { // The event which triggers the provided callback
+cache.on('ready', (cache) => { // The event which triggers the provided callback
     console.log('Cache ready !!!');
+
+    // cache.read(...);
 });
 
-cache.on('update', function () {
+cache.on('update', (cache) => {
     console.log('Cache updated !');
+
+    // cache.read(...);
 });
 
-cache.on('directory', function (directory) {
+cache.on('directory', (directory) => {
     console.log('new directory added: "' + directory.location + '"');
 });
 
-cache.on('file', function (file) {
+cache.on('file', (file) => {
     console.log('new file added: "' + file.location + '"');
 });
 
-cache.on('change', function (element) {
+cache.on('change', (element) => {
     if (element.stats.isDirectory()) {
         console.log('directory "' + element.location + '" changed');
     } else {
@@ -102,7 +126,7 @@ cache.on('change', function (element) {
     }
 });
 
-cache.on('unlink', function (element) {
+cache.on('unlink', (element) => {
     if (element.stats.isDirectory()) {
         console.log('directory "' + element.location + '" removed');
     } else {
@@ -110,14 +134,25 @@ cache.on('unlink', function (element) {
     }
 });
 
+/* List */
+cache.list();
+/*
+File
+=> ['']
+
+Directory
+=> ['', '1.txt', '2.txt', '3.txt', ...]
+*/
+
 /* Read */
 cache.read();
 /*
 File
 =>  {
-        content: Buffer<00 01 02 ...>
-        location: '',
-        stats: {
+        content: Buffer<00 01 02 ...>   // content of the file
+        data: {},                       // metadata of the file, you fill it
+        location: '',                   // location of the file
+        stats: {                        // stats of the file
             atime: ...
             ctime: ...
             mtime: ...
@@ -127,9 +162,10 @@ File
 
 Directory
 =>  {
-        content: ['1.txt', '2.txt', '3.txt', ...]
-        location: '',
-        stats: {
+        content: ['1.txt', '2.txt', '3.txt', ...],  // content of the directory
+        data: {},                                   // metadata of the directory, you fill it
+        location: '',                               // location of the directory
+        stats: {                                    // stats of the directory
             atime: ...
             ctime: ...
             mtime: ...
