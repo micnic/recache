@@ -1,3 +1,7 @@
+## 0.4.1
+- Fix error when a file is provided as the root element
+- Remove trailing slashes in the provided root element location
+
 ## 0.4.0
 - Upgrade code to ES6
 - Drop support of Node.js <4.0

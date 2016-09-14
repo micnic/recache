@@ -1,6 +1,6 @@
 <img src="https://raw.github.com/micnic/recache/master/logo.png"/>
 
-# 0.4.0
+# 0.4.1
 
 [![Gitter](https://badges.gitter.im/recache.png)](https://gitter.im/micnic/recache)
 
