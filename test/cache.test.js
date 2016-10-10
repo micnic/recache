@@ -1,6 +1,9 @@
 'use strict';
 
-/* eslint max-len: 0 */
+/* eslint max-len: off */
+/* eslint no-invalid-this: off */
+/* eslint prefer-arrow-callback: off */
+/* eslint object-shorthand: off */
 
 const events = require('events');
 const fs = require('fs');
@@ -215,7 +218,7 @@ tap.test('Cache.readDirectory() with destroyed cache instance', (test) => {
 	});
 });
 
-tap.test('Cache.unlink() with a file', (test) => {
+tap.test('Cache.unlinkElement() with a file', (test) => {
 
 	const fakeInstance = createFakeInstance(false, false, false);
 	const fakeFile = createFakeElement('file', false);
@@ -229,13 +232,13 @@ tap.test('Cache.unlink() with a file', (test) => {
 		asserts++;
 	});
 
-	Cache.unlink(fakeInstance, fakeFile);
+	Cache.unlinkElement(fakeInstance, 'file');
 
 	test.ok(asserts === 1);
 	test.end();
 });
 
-tap.test('Cache.unlink() with an empty directory', (test) => {
+tap.test('Cache.unlinkElement() with an empty directory', (test) => {
 
 	const fakeInstance = createFakeInstance(false, false, false);
 	const fakeDirectory = createFakeElement('directory', true);
@@ -253,13 +256,13 @@ tap.test('Cache.unlink() with an empty directory', (test) => {
 		asserts++;
 	});
 
-	Cache.unlink(fakeInstance, fakeDirectory);
+	Cache.unlinkElement(fakeInstance, 'directory');
 
 	test.ok(asserts === 1);
 	test.end();
 });
 
-tap.test('Cache.unlink() with an directory with one file', (test) => {
+tap.test('Cache.unlinkElement() with an directory with one file', (test) => {
 
 	const fakeInstance = createFakeInstance(false, false, false);
 	const fakeDirectory = createFakeElement('directory', true);
@@ -286,7 +289,7 @@ tap.test('Cache.unlink() with an directory with one file', (test) => {
 		asserts++;
 	});
 
-	Cache.unlink(fakeInstance, fakeDirectory);
+	Cache.unlinkElement(fakeInstance, 'directory');
 
 	test.ok(asserts === 2);
 	test.end();
@@ -409,7 +412,7 @@ tap.test('Cache.updateDirectory() with empty directory', (test) => {
 	Cache.updateDirectory(fakeInstance, 'emptydir', function () {
 		test.ok(Array.isArray(fakeInstance.container['emptydir'].content));
 		test.ok(fakeInstance.container['emptydir'].content.length === 0);
-
+		test.ok(asserts === 1);
 		test.end();
 	});
 });
@@ -432,6 +435,7 @@ tap.test('Cache.updateDirectory() with a directory with one file', (test) => {
 	Cache.updateDirectory(fakeInstance, 'onefiledir', function () {
 		test.ok(Array.isArray(fakeInstance.container['onefiledir'].content));
 		test.ok(fakeInstance.container['onefiledir'].content.length === 1);
+		test.ok(asserts === 1);
 		test.end();
 	});
 });
@@ -631,7 +635,7 @@ tap.test('Cache.updateElement() with destroyed cache instance', (test) => {
 	});
 });
 
-tap.test('Cache.startUpdate() with ready and not updated cache instance', (test) => {
+/*tap.test('Cache.startUpdate() with ready and not updated cache instance', (test) => {
 
 	const fakeInstance = createFakeInstance(true, false, false);
 
@@ -680,7 +684,7 @@ tap.test('Cache.startUpdate() with ready but updating cache instance', (test) =>
 		test.ok(!fakeInstance.updating);
 		test.end();
 	});
-});
+});*/
 
 tap.test('Cache.create() with no arguments', (test) => {
 	try {

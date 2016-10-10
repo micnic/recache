@@ -1,6 +1,6 @@
 <img src="https://raw.github.com/micnic/recache/master/logo.png"/>
 
-# 0.4.1
+# 0.4.2
 
 [![Gitter](https://badges.gitter.im/recache.png)](https://gitter.im/micnic/recache)
 
@@ -8,6 +8,7 @@ recache is a file system cache which loads the provided folder or file into the 
 
 #### Works with node.js 4.0+!
 #### Any feedback is welcome!
+If you found any issues using this module please report it on Github, it will be fixed as soon as possible :)
 
 #### More simple modules:
 - [simpleR](https://www.npmjs.com/package/simpler)
@@ -18,37 +19,19 @@ recache is a file system cache which loads the provided folder or file into the 
 
     npm install recache
 
-## Usage
+## API
 
 `recache(location[, options, callback])`
 
-location: string
+- `location`: [ string ] - location of the cached root element
+- `options`: [ object ] - cache configuration options, optional
+    - `filter`: [ function(location: string, stats: fs.Stats) => boolean ] - filter cached elements, by default all elements are cached
+    - `persistent`: [ boolean ] - enable persistence, default is true
+- `callback`: [ function(cache: recache.Cache) => void ] - function called when cache is ready
 
-options: { filter: (name: string, stats: fs.Stats) => boolean, persistent: boolean }
+`recache` will load directories and files provided in the `location` argument. Directories are recursively traversed, their content is loaded into the memory and watched for changes. Two options can be defined for the cache: `filter` - a function which receives two arguments, the location and the stats of the current element, it has to return a boolean value to filter the names of the files or the directories that should be cached (by default all files and directories contained by the provided directory are cached) and `persistent` - a boolean value to define if the process should continue while the cache is watching for changes (by default the created cache is persistent). The last argument is a callback function which is executed only once, in the beginning when all the files and directories are loaded in the memory (`ready` event). `recache` should be used only with directories and files which are used often in a certain process, but not frequently modified, thus speeding up the access to the stored files and directories. Note that the stored content should not surpass the available memory.
 
-callback: (cache: recache.Cache) => void
-
-`recache` can cache directories and files based on the provided location. Directories are recursively traversed, their content is loaded into the memory and watched for changes. Two options can be defined for the cache: `filter` - a function which receives two arguments, the location and the stats of the current element, it has to return a boolean value to filter the names of the files or the directories that should be cached (by default all files and directories contained by the provided directory are cached) and `persistent` - a boolean value to define if the process should continue while the cache is watching for changes (by default the created cache is persistent). The last argument is callback function which is executed only once, in the beginning when all the files and directories are loaded in the memory (`ready` event). `recache` should be used only with directories and files which are used often in a certain process, but not frequently modified, thus speeding up the access to the stored files and directories. Note that the stored content should not surpass the available memory.
-
-Emitted events:
-
-`error` - when an error raised, provides the error as the callback argument
-
-`ready` - when all the files and directories are loaded for the first time
-
-`update` - when one or multiple changes were made inside the cache
-
-`directory` - when a new directory is added to the cache, provides the directory object as the callback argument
-
-`file` - when a new file is added to the cache, provides the file object as the callback argument
-
-`change` - when a directory or a file is changed, provides the element object as the callback argument
-
-`unlink` - when a directory or a file is removed, provides the element object as the callback argument
-
-```js
-const cache = recache('static_files');
-```
+### Members
 
 `.data`
 
@@ -70,23 +53,33 @@ To list all possible readable sources `.list()` method is used with an optional 
 
 Destroy the cached data.
 
+### Emitted events
+
+- `error` - when an error raised, provides the error as the callback argument
+- `ready` - when all the files and directories are loaded for the first time
+- `update` - when one or multiple changes were made inside the cache
+- `directory` - when a new directory is added to the cache, provides the directory object as the callback argument
+- `file` - when a new file is added to the cache, provides the file object as the callback argument
+- `change` - when a directory or a file is changed, provides the element object as the callback argument
+- `unlink` - when a directory or a file is removed, provides the element object as the callback argument
+
 ## Example
 
 ```js
 const recache = require('recache');
 
 const cache = recache('static_files', {
-    filter: (name, stats) => {	                // filter for hidden files, by default all files and directories are cached
+    filter: (location, stats) => {              // filter for hidden files, by default all files and directories are cached
 
         let result = false;
 
         if (stats.isFile()) {
-            result = /^(?!\.).+$/.test(name);
+            result = /^(?!\.).+$/.test(location);
         }
 
         return result;
     },
-    persistent: true	                        // make persistent cache, default is false
+    persistent: true	                        // make persistent cache, default is true
 }, (cache) => {
     console.log('Cache ready !!!');
 

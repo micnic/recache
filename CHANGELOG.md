@@ -1,3 +1,9 @@
+## 0.4.2
+- Fix multiple stability issues introduced in 0.4.0
+- Ignore unreadable elements errors because of the Node.js watcher behavior
+- Allow multiple updates at the same time without memory leak warning
+- Do not emit update if actually no changes were made
+
 ## 0.4.1
 - Fix error when a file is provided as the root element
 - Remove trailing slashes in the provided root element location
