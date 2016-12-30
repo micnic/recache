@@ -578,49 +578,6 @@ tap.test('Cache.updateElement() with a modified cached directory', (test) => {
 	});
 });
 
-tap.test('Cache.updateElement() with error and inexistent file', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, false);
-
-	let asserts = 0;
-
-	fakeInstance.on('error', function (error) {
-		test.type(error, Error);
-		asserts++;
-	});
-
-	Cache.updateElement(fakeInstance, 'inexistent file', function () {
-		test.ok(asserts === 1);
-		test.end();
-	});
-});
-
-tap.test('Cache.updateElement() with error and cached file', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, false);
-	const fakeFile = createFakeElement('cached file', false);
-
-	let asserts = 0;
-
-	fakeInstance.container['cached file'] = fakeFile;
-
-	fakeInstance.on('error', function (error) {
-		test.type(error, Error);
-		asserts++;
-	});
-
-	fakeInstance.on('unlink', function (element) {
-		test.ok(element === fakeFile);
-		test.ok(fakeInstance.container['cached file'] === undefined);
-		asserts++;
-	});
-
-	Cache.updateElement(fakeInstance, 'cached file', function () {
-		test.ok(asserts === 2);
-		test.end();
-	});
-});
-
 tap.test('Cache.updateElement() with destroyed cache instance', (test) => {
 
 	const fakeInstance = createFakeInstance(false, false, true);
@@ -772,7 +729,7 @@ tap.test('Cache.create() with location and options with filter provided', (test)
 		test.ok(cache === this);
 		test.ok(cache === instance);
 		test.ok(cache.ready);
-		test.ok(asserts === 5);
+		test.ok(asserts === 4);
 
 		cache.destroy();
 

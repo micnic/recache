@@ -1,3 +1,6 @@
+## 0.4.3
+- Fix possibility to read object prototype properties of the container object
+
 ## 0.4.2
 - Fix multiple stability issues introduced in 0.4.0
 - Ignore unreadable elements errors because of the Node.js watcher behavior
