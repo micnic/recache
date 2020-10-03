@@ -1,882 +1,509 @@
 'use strict';
 
-/* eslint max-len: off */
-/* eslint no-invalid-this: off */
-/* eslint prefer-arrow-callback: off */
-/* eslint object-shorthand: off */
-
-const events = require('events');
-const fs = require('fs');
-const recache = require('recache');
+const {
+	mkdir,
+	rename,
+	rmdir,
+	symlink,
+	unlink,
+	writeFile,
+	writeFileSync
+} = require('fs');
+const { join, relative } = require('path');
+const rimraf = require('rimraf');
 const tap = require('tap');
+const { promisify } = require('util');
 
 const Cache = require('recache/lib/cache');
 
-const CachePrototype = Cache.prototype;
-const CacheDestroy = CachePrototype.destroy;
-const CacheList = CachePrototype.list;
-const CacheRead = CachePrototype.read;
+const nonExistent = 'non-existent';
+const testDir = join(__dirname, 'test-dir');
+const slink = join(testDir, 'slink');
 
-fs.mkdirSync(`${__dirname}/cache`);
-fs.mkdirSync(`${__dirname}/cache/emptydir`);
-fs.mkdirSync(`${__dirname}/cache/onefiledir`);
-fs.writeFileSync(`${__dirname}/cache/onefiledir/file`, 'file content');
-fs.writeFileSync(`${__dirname}/cache/file`, 'file content');
+const cleanUp = () => promisify(rimraf)(testDir);
 
-function createFakeInstance(ready, updating, destroyed) {
+tap.test('Init tests', async (test) => {
 
-	const fakeInstance = Object.create(events.EventEmitter.prototype);
+	await cleanUp();
 
-	fakeInstance.location = `${__dirname}/cache`;
-	fakeInstance.ready = ready;
-	fakeInstance.updating = updating;
-	fakeInstance.destroyed = destroyed;
-	fakeInstance.container = {};
-	fakeInstance.watchers = {};
-	fakeInstance.options = {};
+	await promisify(mkdir)(testDir);
+	await promisify(mkdir)(join(testDir, 'empty-dir'));
+	await promisify(mkdir)(join(testDir, 'dir'));
+	await promisify(writeFile)(join(testDir, 'dir', 'file'), '');
 
-	return fakeInstance;
-}
-
-function createFakeElement(location, isDirectory) {
-
-	const fakeElement = {};
-
-	fakeElement.location = location;
-	fakeElement.stats = {};
-
-	if (isDirectory) {
-		fakeElement.content = [];
-	}
-
-	fakeElement.stats.isDirectory = function () {
-		return isDirectory;
-	};
-
-	return fakeElement;
-}
-
-tap.ok(recache === Cache.create);
-
-tap.ok(typeof CacheDestroy === 'function');
-tap.ok(typeof CacheList === 'function');
-tap.ok(typeof CacheRead === 'function');
-
-tap.test('Cache.readFile() with existing uncached file', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, false);
-
-	fakeInstance.container['file'] = createFakeElement('file', false);
-
-	Cache.readFile(fakeInstance, 'file', function () {
-		test.ok(String(fakeInstance.container['file'].content) === 'file content');
-		test.end();
-	});
-});
-
-tap.test('Cache.readFile() with error and inexistent file', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, false);
-
-	let asserts = 0;
-
-	fakeInstance.on('error', function (error) {
-		test.type(error, Error);
-		asserts++;
-	});
-
-	Cache.readFile(fakeInstance, 'inexistent file', function () {
-		test.ok(asserts === 1);
-		test.end();
-	});
-});
-
-tap.test('Cache.readFile() with error and cached file', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, false);
-	const fakeFile = createFakeElement('cached file', false);
-
-	let asserts = 0;
-
-	fakeInstance.container['cached file'] = fakeFile;
-
-	fakeInstance.on('error', function (error) {
-		test.type(error, Error);
-		asserts++;
-	});
-
-	fakeInstance.on('unlink', function (element) {
-		test.ok(element === fakeFile);
-		test.ok(fakeInstance.container['cached file'] === undefined);
-		asserts++;
-	});
-
-	Cache.readFile(fakeInstance, 'cached file', function () {
-		test.ok(asserts === 2);
-		test.end();
-	});
-});
-
-tap.test('Cache.readFile() with destroyed cache instance', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, true);
-
-	fakeInstance.on('error', function (error) {
-		test.ok(error.message === 'Cache instance is destroyed');
-		test.end();
-	});
-
-	Cache.readFile(fakeInstance, 'file', function () {
-		test.fail();
-	});
-});
-
-tap.test('Cache.readDirectory() with existing empty uncached directory', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, false);
-
-	fakeInstance.container['emptydir'] = createFakeElement('emptydir', true);
-
-	Cache.readDirectory(fakeInstance, 'emptydir', function () {
-		test.ok(Array.isArray(fakeInstance.container['emptydir'].content));
-		test.ok(fakeInstance.container['emptydir'].content.length === 0);
-		test.end();
-	});
-});
-
-tap.test('Cache.readDirectory() with existing uncached directory with one file', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, false);
-
-	fakeInstance.container['onefiledir'] = createFakeElement('onefiledir', true);
-
-	Cache.readDirectory(fakeInstance, 'onefiledir', function () {
-		test.ok(Array.isArray(fakeInstance.container['onefiledir'].content));
-		test.ok(fakeInstance.container['onefiledir'].content.length === 1);
-		test.end();
-	});
-});
-
-tap.test('Cache.readDirectory() with error and inexistent directory', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, false);
-
-	let asserts = 0;
-
-	fakeInstance.on('error', function (error) {
-		test.type(error, Error);
-		asserts++;
-	});
-
-	Cache.readDirectory(fakeInstance, 'inexistent directory', function () {
-		test.ok(asserts === 1);
-		test.end();
-	});
-});
-
-tap.test('Cache.readDirectory() with error and cached directory', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, false);
-	const fakeDirectory = createFakeElement('cached directory', true);
-	const fakeWatcher = {};
-
-	let asserts = 0;
-
-	fakeInstance.container['cached directory'] = fakeDirectory;
-	fakeInstance.watchers['cached directory'] = fakeWatcher;
-
-	fakeWatcher.close = function () {};
-
-	fakeInstance.on('error', function (error) {
-		test.type(error, Error);
-		asserts++;
-	});
-
-	fakeInstance.on('unlink', function (element) {
-		test.ok(element === fakeDirectory);
-		test.ok(fakeInstance.container['cached directory'] === undefined);
-		asserts++;
-	});
-
-	Cache.readDirectory(fakeInstance, 'cached directory', function () {
-		test.ok(asserts === 2);
-		test.end();
-	});
-});
-
-tap.test('Cache.readDirectory() with destroyed cache instance', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, true);
-
-	fakeInstance.on('error', function (error) {
-		test.ok(error.message === 'Cache instance is destroyed');
-		test.end();
-	});
-
-	Cache.readDirectory(fakeInstance, 'emptydir', function () {
-		test.fail();
-	});
-});
-
-tap.test('Cache.unlinkElement() with a file', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, false);
-	const fakeFile = createFakeElement('file', false);
-
-	let asserts = 0;
-
-	fakeInstance.container['file'] = fakeFile;
-
-	fakeInstance.on('unlink', function (element) {
-		test.ok(element === fakeFile);
-		asserts++;
-	});
-
-	Cache.unlinkElement(fakeInstance, 'file');
-
-	test.ok(asserts === 1);
 	test.end();
 });
 
-tap.test('Cache.unlinkElement() with an empty directory', (test) => {
+tap.test('Cache.prepareArgs()', (test) => {
 
-	const fakeInstance = createFakeInstance(false, false, false);
-	const fakeDirectory = createFakeElement('directory', true);
-	const fakeWatcher = {};
-
-	let asserts = 0;
-
-	fakeInstance.container['directory'] = fakeDirectory;
-	fakeInstance.watchers['directory'] = fakeWatcher;
-
-	fakeWatcher.close = function () {};
-
-	fakeInstance.on('unlink', function (element) {
-		test.ok(element === fakeDirectory);
-		asserts++;
-	});
-
-	Cache.unlinkElement(fakeInstance, 'directory');
-
-	test.ok(asserts === 1);
-	test.end();
-});
-
-tap.test('Cache.unlinkElement() with an directory with one file', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, false);
-	const fakeDirectory = createFakeElement('directory', true);
-	const fakeFile = createFakeElement('directory/file', false);
-	const fakeWatcher = {};
-
-	let asserts = 0;
-
-	fakeInstance.container['directory'] = fakeDirectory;
-	fakeInstance.container['directory/file'] = fakeFile;
-	fakeInstance.watchers['directory'] = fakeWatcher;
-
-	fakeDirectory.content = ['file'];
-
-	fakeWatcher.close = function () {};
-
-	fakeInstance.on('unlink', function (element) {
-		if (asserts === 0) {
-			test.ok(element === fakeFile);
-		} else if (asserts === 1) {
-			test.ok(element === fakeDirectory);
+	test.test('No arguments provided', (t) => {
+		try {
+			Cache.prepareArgs();
+			t.fail('Method should fail');
+		} catch (error) {
+			t.ok(error instanceof Error);
 		}
 
-		asserts++;
+		t.end();
 	});
 
-	Cache.unlinkElement(fakeInstance, 'directory');
+	test.test('Path provided', (t) => {
 
-	test.ok(asserts === 2);
+		const args = Cache.prepareArgs('path');
+
+		t.match(args, {
+			callback: null,
+			options: {
+				filter: null,
+				persistent: false,
+				store: false
+			},
+			path: 'path'
+		});
+
+		t.end();
+	});
+
+	test.test('Path and null options provided', (t) => {
+
+		const args = Cache.prepareArgs('path', null);
+
+		t.match(args, {
+			callback: null,
+			options: {
+				filter: null,
+				persistent: false,
+				store: false
+			},
+			path: 'path'
+		});
+
+		t.end();
+	});
+
+	test.test('Path, null options and callback provided', (t) => {
+
+		const callback = () => null;
+		const args = Cache.prepareArgs('path', null, callback);
+
+		t.match(args, {
+			callback,
+			options: {
+				filter: null,
+				persistent: false,
+				store: false
+			},
+			path: 'path'
+		});
+
+		t.end();
+	});
+
+	test.test('Path and empty options provided', (t) => {
+
+		const args = Cache.prepareArgs('path', {});
+
+		t.match(args, {
+			callback: null,
+			options: {
+				filter: null,
+				persistent: false,
+				store: false
+			},
+			path: 'path'
+		});
+
+		t.end();
+	});
+
+	test.test('Path and all options provided', (t) => {
+
+		const filter = () => true;
+		const args = Cache.prepareArgs('path', {
+			filter,
+			persistent: true,
+			store: true
+		});
+
+		t.match(args, {
+			callback: null,
+			options: {
+				filter,
+				persistent: true,
+				store: true
+			},
+			path: 'path'
+		});
+
+		t.end();
+	});
+
+	test.test('Path and callback provided', (t) => {
+
+		const callback = () => null;
+		const args = Cache.prepareArgs('path', callback);
+
+		t.match(args, {
+			callback,
+			options: {
+				filter: null,
+				persistent: false,
+				store: false
+			},
+			path: 'path'
+		});
+
+		t.end();
+	});
+
 	test.end();
 });
 
-tap.test('Cache.addFile() when cache instance is not ready', (test) => {
+tap.test('Cache.normalizeLocation()', (test) => {
 
-	const fakeInstance = createFakeInstance(false, false, false);
+	test.test('Invalid location', (t) => {
+		try {
+			Cache.normalizeLocation();
+			t.fail('Method should fail');
+		} catch (error) {
+			t.ok(error instanceof Error);
+		}
 
-	fakeInstance.container['file'] = createFakeElement('file', false);
+		t.end();
+	});
 
-	Cache.addFile(fakeInstance, 'file', function () {
-		test.ok(String(fakeInstance.container['file'].content) === 'file content');
+	test.test('Empty string', (t) => {
+		t.equal(Cache.normalizeLocation(''), '<root>');
+
+		t.end();
+	});
+
+	test.test('Solidus', (t) => {
+		t.equal(Cache.normalizeLocation('/'), '<root>');
+
+		t.end();
+	});
+
+	test.test('Start with root', (t) => {
+		t.equal(Cache.normalizeLocation('<root>'), '<root>');
+
+		t.end();
+	});
+
+	test.test('Start with solidus', (t) => {
+		t.equal(Cache.normalizeLocation('/path'), '<root>/path');
+
+		t.end();
+	});
+
+	test.test('Just path', (t) => {
+		t.equal(Cache.normalizeLocation('path'), '<root>/path');
+
+		t.end();
+	});
+
+	test.end();
+});
+
+tap.test('Cache.prototype.constructor()', (test) => {
+
+	test.test('Non-existent element', (t) => {
+
+		const cache = new Cache(nonExistent);
+
+		cache.on('destroy', () => {
+			t.end();
+		}).on('error', (error) => {
+			t.ok(error instanceof Error);
+		}).on('ready', () => {
+			t.fail('Cache should never be ready for non-existent element');
+		});
+	});
+
+	test.test('Non-existent element with destroy', (t) => {
+
+		const cache = new Cache(nonExistent);
+
+		cache.on('destroy', () => {
+			t.end();
+		}).on('ready', () => {
+			t.fail('Cache should never be ready for non-existent element');
+		});
+
+		cache.destroy();
+	});
+
+	test.test('Symlink', async (t) => {
+
+		await promisify(symlink)(join(testDir, 'empty-dir'), slink);
+
+		const cache = new Cache(slink);
+
+		cache.on('destroy', async () => {
+			await promisify(unlink)(slink);
+			t.end();
+		}).on('ready', () => {
+			t.fail('Cache should never be ready for non-existent element');
+		});
+	});
+
+	test.test('Cache file with error', async (t) => {
+
+		const path = join(testDir, 'temp-file');
+
+		await promisify(writeFile)(path, '');
+
+		const cache = new Cache(path, {
+			store: true
+		});
+
+		return new Promise((resolve) => {
+			cache.on('destroy', () => {
+				resolve();
+				t.end();
+			}).on('error', (error) => {
+				t.ok(error instanceof Error);
+			});
+
+			promisify(unlink)(path);
+		});
+	});
+
+	test.test('Cache directory with error', async (t) => {
+
+		const path = join(testDir, 'temp-dir');
+
+		await promisify(mkdir)(path);
+
+		const cache = new Cache(path);
+
+		return new Promise((resolve) => {
+			cache.on('destroy', () => {
+				resolve();
+				t.end();
+			}).on('error', (error) => {
+				t.ok(error instanceof Error);
+			});
+
+			promisify(rmdir)(path);
+		});
+	});
+
+	test.test('Empty directory', (t) => {
+
+		const path = join(testDir, 'empty-dir');
+
+		const cache = new Cache(path);
+
+		cache.on('destroy', () => {
+			t.end();
+		}).on('ready', (c) => {
+			t.equal(cache, c);
+			cache.destroy();
+		});
+	});
+
+	test.test('Non-empty directory with filter', (t) => {
+
+		const path = join(testDir, 'dir');
+
+		const cache = new Cache(path, {
+			filter(location) {
+				return relative(path, location) !== 'file';
+			}
+		});
+
+		cache.on('destroy', () => {
+			t.end();
+		}).on('ready', (c) => {
+			t.equal(c.list().length, 1);
+			t.equal(cache, c);
+			cache.destroy();
+		});
+	});
+
+	test.test('Non-empty directory with store', (t) => {
+
+		const path = join(testDir, 'dir');
+
+		const cache = new Cache(path, {
+			store: true
+		});
+
+		cache.on('destroy', () => {
+			t.end();
+		}).on('ready', (c) => {
+			t.equal(cache, c);
+			cache.destroy();
+		});
+	});
+
+	test.test('Root file', (t) => {
+
+		const path = join(testDir, 'dir', 'file');
+
+		const cache = new Cache(path, (c) => {
+			t.equal(cache, c);
+			t.match(cache, {
+				data: {},
+				path
+			});
+		});
+
+		cache.on('destroy', () => {
+			t.end();
+		}).on('ready', (c) => {
+			t.equal(cache, c);
+			cache.destroy();
+		});
+	});
+
+	test.test('Remove root directory on ready', (t) => {
+
+		const path = join(testDir, 'empty-dir');
+		const cache = new Cache(path, {
+			persistent: true
+		});
+
+		cache.on('destroy', () => {
+			t.end();
+		}).on('error', (error) => {
+			t.ok(error instanceof Error);
+		}).on('ready', (c) => {
+			t.equal(cache, c);
+
+			promisify(rmdir)(path);
+		});
+	});
+
+	test.test('Modify root file before ready', (t) => {
+
+		const path = join(testDir, 'dir', 'file');
+
+		const cache = new Cache(path, {
+			persistent: true
+		});
+
+		cache.on('change', (element) => {
+			t.equal(element.location, '<root>');
+		}).on('destroy', () => {
+			t.end();
+		}).on('error', (error) => {
+			t.fail(error.message);
+		}).on('ready', () => {
+			t.ok(cache.has('/'));
+		}).on('update', (c) => {
+			t.equal(cache, c);
+			cache.destroy();
+		}).on('watch', () => {
+			writeFileSync(path, 'data');
+		});
+	});
+
+	test.test('Modify root file on ready', (t) => {
+
+		const path = join(testDir, 'dir', 'file');
+
+		const cache = new Cache(path);
+
+		cache.on('destroy', () => {
+			t.end();
+		}).on('ready', async () => {
+			await promisify(writeFile)(path, 'data');
+		}).on('update', (c) => {
+			t.equal(cache, c);
+			cache.destroy();
+		}).on('change', (element) => {
+			t.equal(element.location, '<root>');
+		});
+	});
+
+	test.test('Rename root file on ready', (t) => {
+
+		const path = join(testDir, 'dir', 'file');
+
+		const cache = new Cache(path);
+
+		cache.on('destroy', () => {
+			t.end();
+		}).on('error', (error) => {
+			t.ok(error instanceof Error);
+		}).on('ready', async () => {
+			await promisify(rename)(path, `${path}2`);
+		});
+	});
+
+	test.end();
+});
+
+tap.test('Cache.prototype.destroy()', (test) => {
+
+	const cache = new Cache(testDir);
+
+	cache.on('destroy', () => {
 		test.end();
+	}).on('error', (error) => {
+		test.fail(error.message);
+	}).on('ready', () => {
+		cache.destroy();
+		cache.destroy(); // Check for errors when calling destroy twice
 	});
 });
 
-tap.test('Cache.addFile() when cache instance is ready', (test) => {
+tap.test('Cache.prototype.get()', (test) => {
 
-	const fakeInstance = createFakeInstance(true, false, false);
-	const fakeFile = createFakeElement('file', false);
+	const path = join(testDir);
 
-	let asserts = 0;
+	const cache = new Cache(path);
 
-	fakeInstance.container['file'] = fakeFile;
-
-	fakeInstance.on('file', function (file) {
-		test.ok(file === fakeFile);
-		asserts++;
-	});
-
-	Cache.addFile(fakeInstance, 'file', function () {
-		test.ok(String(fakeInstance.container['file'].content) === 'file content');
-		test.ok(asserts === 1);
+	cache.on('destroy', () => {
 		test.end();
+	}).on('error', (error) => {
+		test.fail(error.message);
+	}).on('ready', (c) => {
+		test.ok(typeof c.get() === 'object');
+		test.ok(typeof c.get('/') === 'object');
+		test.equal(c.get(nonExistent), null);
+		cache.destroy();
 	});
 });
 
-tap.test('Cache.addDirectory() when cache is not ready', (test) => {
+tap.test('Cache.prototype.has()', (test) => {
 
-	const fakeInstance = createFakeInstance(false, false, false);
+	const path = join(testDir, 'dir');
 
-	fakeInstance.container['emptydir'] = createFakeElement('emptydir', false);
-	fakeInstance.options.persistent = false;
+	const cache = new Cache(path);
 
-	Cache.addDirectory(fakeInstance, 'emptydir', function () {
-		test.ok(Array.isArray(fakeInstance.container['emptydir'].content));
-		test.ok(fakeInstance.container['emptydir'].content.length === 0);
-		test.ok(!!fakeInstance.watchers['emptydir']);
-
-		fakeInstance.watchers['emptydir'].close();
-
+	cache.on('destroy', () => {
 		test.end();
+	}).on('error', (error) => {
+		test.fail(error.message);
+	}).on('ready', (c) => {
+		test.ok(c.has('/'));
+		cache.destroy();
 	});
 });
 
-tap.test('Cache.addDirectory() when cache is ready', (test) => {
+tap.test('Cache.prototype.list()', (test) => {
 
-	const fakeInstance = createFakeInstance(true, false, false);
-	const fakeDirectory = createFakeElement('emptydir', true);
+	const path = join(testDir, 'dir');
 
-	let asserts = 0;
+	const cache = new Cache(path);
 
-	fakeInstance.container['emptydir'] = fakeDirectory;
-	fakeInstance.options.persistent = false;
-
-	fakeInstance.on('directory', function (directory) {
-		test.ok(directory === fakeDirectory);
-		asserts++;
-	});
-
-	Cache.addDirectory(fakeInstance, 'emptydir', function () {
-		test.ok(Array.isArray(fakeInstance.container['emptydir'].content));
-		test.ok(fakeInstance.container['emptydir'].content.length === 0);
-		test.ok(!!fakeInstance.watchers['emptydir']);
-
-		test.ok(asserts === 1);
-
-		fakeInstance.watchers['emptydir'].close();
-
+	cache.on('destroy', () => {
 		test.end();
-	});
-});
-
-tap.test('Cache.updateFile()', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, false);
-	const fakeFile = createFakeElement('file', false);
-
-	let asserts = 0;
-
-	fakeInstance.container['file'] = fakeFile;
-
-	fakeInstance.on('change', function (element) {
-		test.ok(element === fakeFile);
-		asserts++;
-	});
-
-	Cache.updateFile(fakeInstance, 'file', function () {
-		test.ok(String(fakeInstance.container['file'].content) === 'file content');
-		test.ok(asserts === 1);
-		test.end();
-	});
-});
-
-tap.test('Cache.updateDirectory() with empty directory', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, false);
-	const fakeDirectory = createFakeElement('emptydir', true);
-
-	let asserts = 0;
-
-	fakeInstance.container['emptydir'] = fakeDirectory;
-
-	fakeInstance.on('change', function (element) {
-		test.ok(element === fakeDirectory);
-		asserts++;
-	});
-
-	Cache.updateDirectory(fakeInstance, 'emptydir', function () {
-		test.ok(Array.isArray(fakeInstance.container['emptydir'].content));
-		test.ok(fakeInstance.container['emptydir'].content.length === 0);
-		test.ok(asserts === 1);
-		test.end();
-	});
-});
-
-tap.test('Cache.updateDirectory() with a directory with one file', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, false);
-	const fakeDirectory = createFakeElement('onefiledir', true);
-
-	let asserts = 0;
-
-	fakeInstance.container['onefiledir'] = fakeDirectory;
-	fakeDirectory.content = ['file'];
-
-	fakeInstance.on('change', function (element) {
-		test.ok(element === fakeDirectory);
-		asserts++;
-	});
-
-	Cache.updateDirectory(fakeInstance, 'onefiledir', function () {
-		test.ok(Array.isArray(fakeInstance.container['onefiledir'].content));
-		test.ok(fakeInstance.container['onefiledir'].content.length === 1);
-		test.ok(asserts === 1);
-		test.end();
-	});
-});
-
-tap.test('Cache.updateDirectory() with a directory with removed file', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, false);
-	const fakeDirectory = createFakeElement('onefiledir', true);
-	const fakeFile = createFakeElement('onefiledir/removedfile', false);
-
-	let asserts = 0;
-
-	fakeInstance.container['onefiledir'] = fakeDirectory;
-	fakeInstance.container['onefiledir/removedfile'] = fakeFile;
-	fakeDirectory.content = ['file', 'removedfile'];
-
-	fakeInstance.on('change', function (element) {
-		test.ok(element === fakeDirectory);
-		asserts++;
-	});
-
-	fakeInstance.on('unlink', function (element) {
-		test.ok(element === fakeFile);
-		asserts++;
-	});
-
-	Cache.updateDirectory(fakeInstance, 'onefiledir', function () {
-		test.ok(Array.isArray(fakeInstance.container['onefiledir'].content));
-		test.ok(fakeInstance.container['onefiledir'].content.length === 1);
-		test.ok(asserts === 2);
-		test.end();
-	});
-});
-
-tap.test('Cache.updateElement() with an uncached file', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, false);
-
-	Cache.updateElement(fakeInstance, 'file', function () {
-		test.ok(fakeInstance.container['file'].location === 'file');
-		test.ok(String(fakeInstance.container['file'].content) === 'file content');
-		test.ok(!!fakeInstance.container['file'].stats);
-		test.end();
-	});
-});
-
-tap.test('Cache.updateElement() with an uncached directory', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, false);
-
-	Cache.updateElement(fakeInstance, 'emptydir', function () {
-		test.ok(fakeInstance.container['emptydir'].location === 'emptydir');
-		test.ok(fakeInstance.container['emptydir'].content.length === 0);
-		test.ok(!!fakeInstance.container['emptydir'].stats);
-
-		fakeInstance.watchers['emptydir'].close();
-
-		test.end();
-	});
-});
-
-tap.test('Cache.updateElement() with a filtered uncached file', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, false);
-
-	fakeInstance.filter = function () {
-		return false;
-	};
-
-	Cache.updateElement(fakeInstance, 'file', function () {
-		test.ok(fakeInstance.container['file'] === undefined);
-		test.end();
-	});
-});
-
-tap.test('Cache.updateElement() with an unmodified cached file', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, false);
-	const fakeFile = createFakeElement('file', false);
-	const stats = fs.statSync(`${__dirname}/cache/file`);
-
-	fakeInstance.container['file'] = fakeFile;
-
-	fakeFile.stats = stats;
-
-	Cache.updateElement(fakeInstance, 'file', function () {
-		test.ok(fakeInstance.container['file'].stats === stats);
-		test.end();
-	});
-});
-
-tap.test('Cache.updateElement() with an unmodified cached directory', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, false);
-	const fakeDirectory = createFakeElement('emptydir', true);
-	const stats = fs.statSync(`${__dirname}/cache/emptydir`);
-
-	fakeInstance.container['emptydir'] = fakeDirectory;
-	fakeDirectory.stats = stats;
-
-	Cache.updateElement(fakeInstance, 'emptydir', function () {
-		test.ok(fakeInstance.container['emptydir'].stats === stats);
-		test.end();
-	});
-});
-
-tap.test('Cache.updateElement() with a modified cached file', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, false);
-	const fakeFile = createFakeElement('file', false);
-	const stats = {};
-
-	fakeInstance.container['file'] = fakeFile;
-	fakeFile.stats = stats;
-	stats.mtime = 0;
-
-	Cache.updateElement(fakeInstance, 'file', function () {
-		test.ok(fakeInstance.container['file'].stats !== stats);
-		test.end();
-	});
-});
-
-tap.test('Cache.updateElement() with a modified cached directory', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, false);
-	const fakeDirectory = createFakeElement('emptydir', true);
-	const stats = {};
-
-	fakeInstance.container['emptydir'] = fakeDirectory;
-	fakeDirectory.stats = stats;
-	stats.mtime = 0;
-
-	stats.isDirectory = function () {
-		return true;
-	};
-
-	Cache.updateElement(fakeInstance, 'emptydir', function () {
-		test.ok(fakeInstance.container['emptydir'].stats !== stats);
-		test.end();
-	});
-});
-
-tap.test('Cache.updateElement() with destroyed cache instance', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, true);
-
-	fakeInstance.on('error', function (error) {
-		test.ok(error.message === 'Cache instance is destroyed');
-		test.end();
-	});
-
-	Cache.updateElement(fakeInstance, 'file', function () {
-		test.fail();
-	});
-});
-
-/*tap.test('Cache.startUpdate() with ready and not updated cache instance', (test) => {
-
-	const fakeInstance = createFakeInstance(true, false, false);
-
-	Cache.startUpdate(fakeInstance, 'file');
-
-	test.ok(fakeInstance.updating);
-
-	fakeInstance.on('update', function (instance) {
-		test.ok(instance === fakeInstance);
-		test.ok(!fakeInstance.updating);
-		test.end();
-	});
-});
-
-tap.test('Cache.startUpdate() with not ready cache instance', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, false);
-
-	Cache.startUpdate(fakeInstance, 'file');
-
-	fakeInstance.ready = true;
-	fakeInstance.emit('ready');
-
-	test.ok(fakeInstance.updating);
-
-	fakeInstance.on('update', function (instance) {
-		test.ok(instance === fakeInstance);
-		test.ok(!fakeInstance.updating);
-		test.end();
-	});
-});
-
-tap.test('Cache.startUpdate() with ready but updating cache instance', (test) => {
-
-	const fakeInstance = createFakeInstance(true, true, false);
-
-	Cache.startUpdate(fakeInstance, 'file');
-
-	fakeInstance.updating = false;
-	fakeInstance.emit('update');
-
-	test.ok(fakeInstance.updating);
-
-	fakeInstance.on('update', function (instance) {
-		test.ok(instance === fakeInstance);
-		test.ok(!fakeInstance.updating);
-		test.end();
-	});
-});*/
-
-tap.test('Cache.create() with no arguments', (test) => {
-	try {
-		Cache.create();
-	} catch (error) {
-		test.type(error, TypeError);
-		test.ok(error.message === '"location" argument must be a non-empty string');
-		test.end();
-	}
-});
-
-tap.test('Cache.create() with location provided', (test) => {
-
-	const cache = Cache.create(`${__dirname}/cache`);
-
-	test.ok(!cache.destroyed);
-	test.ok(!cache.ready);
-	test.ok(!cache.updating);
-	test.ok(cache.filter === null);
-	test.ok(cache.location === `${__dirname}/cache`);
-	test.ok(cache.options.persistent === true);
-
-	cache.on('ready', function (instance) {
-		test.ok(cache === this);
-		test.ok(cache === instance);
-		test.ok(cache.ready);
+	}).on('error', (error) => {
+		test.fail(error.message);
+	}).on('ready', (c) => {
+		test.match(c.list(), ['<root>']);
+		test.match(c.list((location) => {
+			return location !== '<root>';
+		}), []);
 
 		cache.destroy();
 
-		test.end();
+		test.match(c.list(), []);
 	});
 });
 
-tap.test('Cache.create() with location and options without filter provided', (test) => {
-
-	const cache = Cache.create(`${__dirname}/cache`, {
-		persistent: false
-	});
-
-	test.ok(!cache.destroyed);
-	test.ok(!cache.ready);
-	test.ok(!cache.updating);
-	test.ok(cache.filter === null);
-	test.ok(cache.location === `${__dirname}/cache`);
-	test.ok(cache.options.persistent === false);
-
-	cache.on('ready', function (instance) {
-		test.ok(cache === this);
-		test.ok(cache === instance);
-		test.ok(cache.ready);
-
-		cache.destroy();
-
-		test.end();
-	});
-});
-
-tap.test('Cache.create() with location and options with filter provided', (test) => {
-
-	const filter = function (location, stats) {
-
-		test.ok(typeof location === 'string');
-		test.ok(typeof stats === 'object');
-
-		asserts++;
-
-		return true;
-	};
-
-	const cache = Cache.create(`${__dirname}/cache`, {
-		persistent: false,
-		filter: filter
-	});
-
-	let asserts = 0;
-
-	test.ok(!cache.destroyed);
-	test.ok(!cache.ready);
-	test.ok(!cache.updating);
-	test.ok(cache.filter === filter);
-	test.ok(cache.location === `${__dirname}/cache`);
-	test.ok(cache.options.persistent === false);
-
-	cache.on('ready', function (instance) {
-		test.ok(cache === this);
-		test.ok(cache === instance);
-		test.ok(cache.ready);
-		test.ok(asserts === 4);
-
-		cache.destroy();
-
-		test.end();
-	});
-});
-
-tap.test('Cache.create() with location and callback provided', (test) => {
-
-	const cache = Cache.create(`${__dirname}/cache`, function (instance) {
-		test.ok(cache === instance);
-		test.ok(cache === this);
-		asserts++;
-	});
-
-	let asserts = 0;
-
-	test.ok(!cache.destroyed);
-	test.ok(!cache.ready);
-	test.ok(!cache.updating);
-	test.ok(cache.filter === null);
-	test.ok(cache.location === `${__dirname}/cache`);
-	test.ok(cache.options.persistent === true);
-
-	cache.on('ready', function (instance) {
-		test.ok(cache === this);
-		test.ok(cache === instance);
-		test.ok(cache.ready);
-		test.ok(asserts === 1);
-
-		cache.destroy();
-
-		test.end();
-	});
-});
-
-tap.test('Cache.prototype.destroy() called on a valid instance', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, false);
-
-	CacheDestroy.call(fakeInstance);
-
-	test.ok(fakeInstance.destroyed);
-	test.ok(fakeInstance.container === null);
-	test.ok(fakeInstance.filter === null);
-	test.ok(fakeInstance.location === null);
-	test.ok(fakeInstance.options === null);
-	test.ok(fakeInstance.ready === null);
-	test.ok(fakeInstance.updating === null);
-	test.ok(fakeInstance.watchers === null);
-	test.end();
-});
-
-tap.test('Cache.prototype.destroy() called on a destroyed instance', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, true);
-
-	CacheDestroy.call(fakeInstance);
-
-	test.ok(fakeInstance.destroyed);
-	test.end();
-});
-
-tap.test('Cache.prototype.list() called on a valid instance without filter', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, false);
-
-	fakeInstance.container['file'] = createFakeElement('file', false);
-
-	const list = CacheList.call(fakeInstance);
-
-	test.ok(Array.isArray(list));
-	test.ok(list.length === 1);
-	test.ok(list[0] === 'file');
-	test.end();
-});
-
-tap.test('Cache.prototype.list() called on a valid instance with filter', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, false);
-
-	let asserts = 0;
-
-	fakeInstance.container['file'] = createFakeElement('file', false);
-
-	const list = CacheList.call(fakeInstance, function (location) {
-		test.ok(typeof location === 'string');
-		asserts++;
-		return false;
-	});
-
-	test.ok(Array.isArray(list));
-	test.ok(list.length === 0);
-	test.ok(asserts === 1);
-	test.end();
-});
-
-tap.test('Cache.prototype.list() called on a destroyed instance', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, true);
-	const list = CacheList.call(fakeInstance);
-
-	test.ok(Array.isArray(list));
-	test.ok(list.length === 0);
-	test.end();
-});
-
-tap.test('Cache.prototype.read() called on a valid instance without arguments', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, false);
-
-	fakeInstance.container[''] = createFakeElement('', false);
-
-	test.ok(CacheRead.call(fakeInstance) === fakeInstance.container['']);
-	test.end();
-});
-
-tap.test('Cache.prototype.read() called on a valid instance with a root slash as argument', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, false);
-
-	fakeInstance.container[''] = createFakeElement('', false);
-
-	test.ok(CacheRead.call(fakeInstance, '/') === fakeInstance.container['']);
-	test.end();
-});
-
-tap.test('Cache.prototype.read() called on a valid instance with an inexistent location', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, false);
-
-	test.ok(CacheRead.call(fakeInstance, 'inexistent location') === null);
-	test.end();
-});
-
-tap.test('Cache.prototype.read() called on a destroyed instance', (test) => {
-
-	const fakeInstance = createFakeInstance(false, false, true);
-
-	test.ok(CacheRead.call(fakeInstance) === null);
-	test.end();
-});
-
-tap.tearDown(function () {
-	fs.unlinkSync(`${__dirname}/cache/file`);
-	fs.rmdirSync(`${__dirname}/cache/emptydir`);
-	fs.unlinkSync(`${__dirname}/cache/onefiledir/file`);
-	fs.rmdirSync(`${__dirname}/cache/onefiledir`);
-	fs.rmdirSync(`${__dirname}/cache`);
-});
+tap.tearDown(cleanUp);

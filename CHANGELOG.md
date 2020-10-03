@@ -1,3 +1,12 @@
+## 0.5.0
+- Support Node 8+
+- Add possibility to disable file content caching using `store` option
+- Replace `.read()` with `.get()`
+- Add `.has()` method
+- Add `location` and `path` properties for cached elements
+- Add typescript types definitions
+- Add `destroy` event
+
 ## 0.4.3
 - Fix possibility to read object prototype properties of the container object
 

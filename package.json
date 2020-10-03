@@ -1,37 +1,43 @@
 {
 	"name": "recache",
-	"version": "0.4.3",
+	"version": "0.5.0",
 	"description": "File system cache that listens to file changes",
 	"keywords": [
 		"cache",
 		"fs",
-		"simple"
+		"watch"
 	],
 	"homepage": "http://micnic.github.io/recache",
 	"bugs": {
-		"url": "https://github.com/micnic/recache/issues",
-		"email": "micnic90@gmail.com"
+		"url": "https://github.com/micnic/recache/issues"
 	},
-	"license": "GPL-3.0",
+	"license": "MIT",
 	"author": {
-		"name": "Micleusanu Nicu",
+		"name": "Nicu Micleușanu",
 		"email": "micnic90@gmail.com",
 		"url": "https://github.com/micnic"
 	},
 	"main": "index",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/micnic/recache"
-	},
+	"repository": "github:micnic/recache",
+	"files": [
+		"index.d.ts",
+		"index.js",
+		"lib"
+	],
 	"scripts": {
-		"test": "tap test"
+		"prepublishOnly": "npm test",
+		"test": "tap -b test/*.test.js",
+		"test-cov-html": "npm test -- --coverage-report=html",
+		"test-only": "npm test -- -O"
 	},
 	"devDependencies": {
-		"eslint": "3.x",
-		"jsinspect": "0.8.x",
-		"tap": "6.x"
+		"eslint": "7.x",
+		"jsinspect": "0.12.x",
+		"rimraf": "3.x",
+		"tap": "14.x",
+		"typescript": "4.x"
 	},
 	"engines": {
-		"node": ">=4.0"
+		"node": ">=8.0"
 	}
 }
