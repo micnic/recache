@@ -1,12 +1,14 @@
 {
 	"compilerOptions": {
 		"checkJs": true,
+		"lib": ["es6"],
 		"module": "commonjs",
 		"moduleResolution": "node",
 		"newLine": "lf",
+		"noImplicitAny": true,
 		// Enable strict mode in the future, when the codebase will be ready
 		// "strict": true,
 		"target": "es6"
 	},
-	"include": ["lib"]
+	"include": ["index.js", "lib"]
 }

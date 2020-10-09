@@ -100,12 +100,14 @@ declare namespace recache {
 		filter?: CacheFilter;
 
 		/**
-		 * Flag to enable persistence of file system watchers, default is false
+		 * Flag to enable persistence of file system watchers
+		 * @default false
 		 */
 		persistent?: boolean;
 
 		/**
-		 * Flag to enable file content saving, default is false
+		 * Flag to enable file content saving
+		 * @default false
 		 */
 		store?: boolean;
 	};

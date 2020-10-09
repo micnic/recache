@@ -1,6 +1,6 @@
 {
 	"name": "recache",
-	"version": "0.5.0",
+	"version": "0.5.1",
 	"description": "File system cache that listens to file changes",
 	"keywords": [
 		"cache",
@@ -28,9 +28,11 @@
 		"prepublishOnly": "npm test",
 		"test": "tap -b test/*.test.js",
 		"test-cov-html": "npm test -- --coverage-report=html",
-		"test-only": "npm test -- -O"
+		"test-only": "npm test -- -O",
+		"ts-check": "tsc -p jsconfig.json"
 	},
 	"devDependencies": {
+		"@types/node": "8.x",
 		"eslint": "7.x",
 		"jsinspect": "0.12.x",
 		"rimraf": "3.x",

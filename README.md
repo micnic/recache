@@ -1,10 +1,24 @@
 <img src="https://raw.github.com/micnic/recache/master/logo.png"/>
 
-# 0.5.0
+# 0.5.1
 
-`recache` is a file system cache which loads the provided folder or file into
-the memory, recursively watches the folder tree and updates the data on changes.
-It provides the content and the stats for each element stored in the cache.
+`recache` is a file system cache, it watches recursively a directory tree or a
+file content and updates the data on changes, optionally it may provide the
+content and the stats for each element stored in the cache.
+
+## Comparison with `fs.watch` and `fs.watchFile`
+`recache` provides a more reliable cross-platform way to deal with file system
+watching, subdirectories are being watched recursively. Under the hood `recache`
+uses `fs.watch()` and `fs.watchFile()`, but alleviates the different caveats
+that node fs watch methods have by checking fs stats.
+
+## Comparison with `chokidar`
+In general `chokidar` and `recache` solve the same problems related to
+unreliable default node fs watching methods. While `chokidar` is more focused on
+watching for fs changes in multiple locations and calling functions on specific
+events, `recache` is about watching a single directory tree or file and also
+reading its paths, stats and content directly using only its API. `recache` is a
+pure JS solution and does not require any code compilation on installation.
 
 #### Any feedback is welcome!
 #### Works with node.js 8.0+!
