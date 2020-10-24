@@ -1,122 +1,120 @@
 import { EventEmitter } from 'events';
 import { Stats } from 'fs';
 
+type DirectoryType = 'directory';
+type FileType = 'file';
+type CacheDirectoryContent = string[];
+type CacheFileContent = Buffer | null;
+type VoidListener = () => void;
+type CacheDirectoryListener = (directory: Readonly<recache.CacheDirectory>) => void;
+type CacheFileListener = (file: Readonly<recache.CacheFile>) => void;
+type CacheElementListener = (element: Readonly<recache.CacheElement>) => void;
+type ErrorListener = (error: Error) => void;
+type CacheEventListener = CacheCallback | VoidListener;
+type CacheElementEventListener = CacheElementListener | VoidListener;
+type ErrorEventListener = ErrorListener | VoidListener;
+type DirectoryEventListener = CacheDirectoryListener | VoidListener;
+type FileEventListener = CacheFileListener | VoidListener;
+
+type CacheElementCommons = {
+
+	/**
+	 * Container to store user data
+	 */
+	data: recache.UserData;
+
+	/**
+	 * Internal location of the cache element inside the cache
+	 */
+	location: string;
+
+	/**
+	 * Absolute path of the cache element in file system
+	 */
+	path: string;
+
+	/**
+	 * File system stats of the cache element
+	 */
+	stats: Stats;
+};
+
 declare namespace recache {
 
-	type DirectoryType = 'directory';
-	type FileType = 'file';
-	type CacheDirectoryContent = string[];
-	type CacheFileContent = Buffer | null;
-	type VoidListener = () => void;
-	type CacheDirectoryListener = (directory: CacheDirectory) => void;
-	type CacheFileListener = (file: CacheFile) => void;
-	type CacheElementListener = (element: CacheElement) => void;
-	type ErrorListener = (error: Error) => void;
-	type CacheEventListener = CacheCallback | VoidListener;
-	type CacheElementEventListener = CacheElementListener | VoidListener;
-	type ErrorEventListener = ErrorListener | VoidListener;
-	type DirectoryEventListener = CacheDirectoryListener | VoidListener;
-	type FileEventListener = CacheFileListener | VoidListener;
+	type CacheCallback = (cache: Cache) => void;
 
-	type UserData = {
-		[key: string]: any
-	};
-
-	type CacheElementCommons = Readonly<{
+	type CacheDirectory = CacheElementCommons & {
 
 		/**
-		 * Container to store user data
+		 * Content of the cache directory
 		 */
-		data: UserData;
-
-		/**
-		 * Internal location of the cache element inside the cache
-		 */
-		location: string;
-
-		/**
-		 * Absolute path of the cache element in file system
-		 */
-		path: string;
-
-		/**
-		 * File system stats of the cache element
-		 */
-		stats: Stats;
-	}>;
-
-	export type CacheCallback = (cache: Cache) => void;
-
-	export type CacheElementContent = CacheDirectoryContent | CacheFileContent;
-
-	export type CacheElementType = DirectoryType | FileType;
-
-	export interface CacheDirectory extends CacheElementCommons {
-
-		/**
-		 * Content of the directory
-		 */
-		readonly content: CacheDirectoryContent;
+		content: CacheDirectoryContent;
 
 		/**
 		 * Type of the cache element
 		 */
-		readonly type: DirectoryType;
+		type: DirectoryType;
 	};
 
-	export interface CacheFile extends CacheElementCommons {
-
-		/**
-		 * Content of the file
-		 */
-		readonly content: CacheFileContent;
-
-		/**
-		 * Type of the cache element
-		 */
-		readonly type: FileType;
-	};
-
-	export interface CacheElement extends CacheElementCommons {
+	type CacheElement = CacheElementCommons & {
 
 		/**
 		 * Content of the cache element
 		 */
-		readonly content: CacheDirectoryContent | CacheFileContent;
+		content: CacheDirectoryContent | CacheFileContent;
 
 		/**
 		 * Type of the cache element
 		 */
-		readonly type: DirectoryType | FileType;
+		type: CacheElementType;
 	};
 
-	export type CacheFilter = (path: string, stats: Stats) => boolean;
+	type CacheElementType = DirectoryType | FileType;
 
-	export type CacheOptions = {
+	type CacheFile = CacheElementCommons & {
+
+		/**
+		 * Content of the cache file
+		 */
+		content: CacheFileContent;
+
+		/**
+		 * Type of the cache element
+		 */
+		type: FileType;
+	};
+
+	type CacheFilter = (path: string, stats: Stats) => boolean;
+
+	type CacheOptions = Partial<{
 
 		/**
 		 * Filter for cached elements, by default all elements are cached
 		 */
-		filter?: CacheFilter;
+		filter: CacheFilter;
 
 		/**
 		 * Flag to enable persistence of file system watchers
 		 * @default false
 		 */
-		persistent?: boolean;
+		persistent: boolean;
 
 		/**
 		 * Flag to enable file content saving
 		 * @default false
 		 */
-		store?: boolean;
+		store: boolean;
+	}>;
+
+	type List = string[];
+
+	type ListFilter = (location: string, index: number, list: List) => boolean;
+
+	type UserData = {
+		[key: string]: any
 	};
 
-	export type List = string[];
-
-	export type ListFilter = (location: string, index: number, list: List) => boolean;
-
-	export interface Cache extends EventEmitter {
+	interface Cache extends EventEmitter {
 
 		/**
 		 * Container to store user data
@@ -136,7 +134,7 @@ declare namespace recache {
 		/**
 		 * Return the object representing the located element
 		 */
-		get(location?: string): CacheElement | null;
+		get(location?: string): Readonly<CacheElement> | null;
 
 		/**
 		 * Check if the cache contains an element on the provided location
@@ -435,11 +433,21 @@ declare namespace recache {
 /**
  * Create and start a file system cache
  */
-declare function recache(path: string, options?: recache.CacheOptions, callback?: recache.CacheCallback): recache.Cache;
+declare function recache(path: string, options: recache.CacheOptions, callback: recache.CacheCallback): recache.Cache;
+
+/**
+ * Create and start a file system cache
+ */
+declare function recache(path: string, options: recache.CacheOptions): recache.Cache;
 
 /**
  * Create and start a file system cache
  */
 declare function recache(path: string, callback: recache.CacheCallback): recache.Cache;
+
+/**
+ * Create and start a file system cache
+ */
+declare function recache(path: string): recache.Cache;
 
 export = recache;

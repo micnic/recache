@@ -1,6 +1,6 @@
 {
 	"name": "recache",
-	"version": "0.5.1",
+	"version": "0.5.2",
 	"description": "File system cache that listens to file changes",
 	"keywords": [
 		"cache",
@@ -25,7 +25,7 @@
 		"lib"
 	],
 	"scripts": {
-		"prepublishOnly": "npm test",
+		"prepublishOnly": "npm test && npm run ts-check",
 		"test": "tap -b test/*.test.js",
 		"test-cov-html": "npm test -- --coverage-report=html",
 		"test-only": "npm test -- -O",

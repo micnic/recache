@@ -5,9 +5,7 @@
 		"module": "commonjs",
 		"moduleResolution": "node",
 		"newLine": "lf",
-		"noImplicitAny": true,
-		// Enable strict mode in the future, when the codebase will be ready
-		// "strict": true,
+		"strict": true,
 		"target": "es6"
 	},
 	"include": ["index.js", "lib"]

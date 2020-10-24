@@ -52,12 +52,7 @@ tap.test('Cache.prepareArgs()', (test) => {
 		const args = Cache.prepareArgs('path');
 
 		t.match(args, {
-			callback: null,
-			options: {
-				filter: null,
-				persistent: false,
-				store: false
-			},
+			options: {},
 			path: 'path'
 		});
 
@@ -69,12 +64,7 @@ tap.test('Cache.prepareArgs()', (test) => {
 		const args = Cache.prepareArgs('path', null);
 
 		t.match(args, {
-			callback: null,
-			options: {
-				filter: null,
-				persistent: false,
-				store: false
-			},
+			options: {},
 			path: 'path'
 		});
 
@@ -88,11 +78,7 @@ tap.test('Cache.prepareArgs()', (test) => {
 
 		t.match(args, {
 			callback,
-			options: {
-				filter: null,
-				persistent: false,
-				store: false
-			},
+			options: {},
 			path: 'path'
 		});
 
@@ -104,12 +90,7 @@ tap.test('Cache.prepareArgs()', (test) => {
 		const args = Cache.prepareArgs('path', {});
 
 		t.match(args, {
-			callback: null,
-			options: {
-				filter: null,
-				persistent: false,
-				store: false
-			},
+			options: {},
 			path: 'path'
 		});
 
@@ -126,7 +107,6 @@ tap.test('Cache.prepareArgs()', (test) => {
 		});
 
 		t.match(args, {
-			callback: null,
 			options: {
 				filter,
 				persistent: true,
@@ -145,11 +125,7 @@ tap.test('Cache.prepareArgs()', (test) => {
 
 		t.match(args, {
 			callback,
-			options: {
-				filter: null,
-				persistent: false,
-				store: false
-			},
+			options: {},
 			path: 'path'
 		});
 

@@ -1,6 +1,6 @@
 <img src="https://raw.github.com/micnic/recache/master/logo.png"/>
 
-# 0.5.1
+# 0.5.2
 
 `recache` is a file system cache, it watches recursively a directory tree or a
 file content and updates the data on changes, optionally it may provide the
