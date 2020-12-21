@@ -1,3 +1,14 @@
+## 0.5.3
+- Add types to package.json
+- Add `.editorconfig`
+- Small refactor for event handling
+
+## 0.5.2
+- Stricter rules for types
+
+## 0.5.1
+- Fix JSDoc types and improve type guards
+
 ## 0.5.0
 - Support Node 8+
 - Add possibility to disable file content caching using `store` option

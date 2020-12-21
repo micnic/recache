@@ -1,6 +1,6 @@
 {
 	"name": "recache",
-	"version": "0.5.2",
+	"version": "0.5.3",
 	"description": "File system cache that listens to file changes",
 	"keywords": [
 		"cache",
@@ -24,6 +24,7 @@
 		"index.js",
 		"lib"
 	],
+	"types": "index.d.ts",
 	"scripts": {
 		"prepublishOnly": "npm test && npm run ts-check",
 		"test": "tap -b test/*.test.js",
