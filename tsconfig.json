@@ -1,0 +1,24 @@
+{
+	"compilerOptions": {
+		"checkJs": true,
+		"esModuleInterop": true,
+		"exactOptionalPropertyTypes": true,
+		"lib": ["es2020"],
+		"module": "commonjs",
+		"moduleResolution": "node",
+		"newLine": "lf",
+		"noEmit": true,
+		"noImplicitAny": true,
+		"noImplicitReturns": true,
+		"noImplicitThis": true,
+		"noUncheckedIndexedAccess": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"strict": true,
+		"target": "es2020"
+	},
+	"include": [
+		"index.js",
+		"lib"
+	]
+}

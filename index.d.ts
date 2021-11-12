@@ -1,50 +1,38 @@
 import { EventEmitter } from 'events';
-import { Stats } from 'fs';
+import { BigIntStats } from 'fs';
 
-type DirectoryType = 'directory';
-type FileType = 'file';
 type CacheDirectoryContent = string[];
 type CacheFileContent = Buffer | null;
-type VoidListener = () => void;
-type CacheDirectoryListener = (directory: Readonly<recache.CacheDirectory>) => void;
-type CacheFileListener = (file: Readonly<recache.CacheFile>) => void;
-type CacheElementListener = (element: Readonly<recache.CacheElement>) => void;
-type ErrorListener = (error: Error) => void;
-type CacheEventListener = CacheCallback | VoidListener;
-type CacheElementEventListener = CacheElementListener | VoidListener;
-type ErrorEventListener = ErrorListener | VoidListener;
-type DirectoryEventListener = CacheDirectoryListener | VoidListener;
-type FileEventListener = CacheFileListener | VoidListener;
-
-type CacheElementCommons = {
-
-	/**
-	 * Container to store user data
-	 */
-	data: recache.UserData;
-
-	/**
-	 * Internal location of the cache element inside the cache
-	 */
-	location: string;
-
-	/**
-	 * Absolute path of the cache element in file system
-	 */
-	path: string;
-
-	/**
-	 * File system stats of the cache element
-	 */
-	stats: Stats;
-};
+type DirectoryType = 'directory';
+type FileType = 'file';
 
 declare namespace recache {
+	type CacheElementType = DirectoryType | FileType;
+	type UserData = Record<string, any>;
 
-	type CacheCallback = (cache: Cache) => void;
+	type CacheElementCommons = {
+		/**
+		 * Container to store user data
+		 */
+		data: UserData;
+
+		/**
+		 * Internal location of the cache element inside the cache
+		 */
+		location: string;
+
+		/**
+		 * Absolute path of the cache element in file system
+		 */
+		path: string;
+
+		/**
+		 * File system stats of the cache element
+		 */
+		stats: BigIntStats;
+	};
 
 	type CacheDirectory = CacheElementCommons & {
-
 		/**
 		 * Content of the cache directory
 		 */
@@ -57,7 +45,6 @@ declare namespace recache {
 	};
 
 	type CacheElement = CacheElementCommons & {
-
 		/**
 		 * Content of the cache element
 		 */
@@ -69,10 +56,7 @@ declare namespace recache {
 		type: CacheElementType;
 	};
 
-	type CacheElementType = DirectoryType | FileType;
-
 	type CacheFile = CacheElementCommons & {
-
 		/**
 		 * Content of the cache file
 		 */
@@ -84,10 +68,9 @@ declare namespace recache {
 		type: FileType;
 	};
 
-	type CacheFilter = (path: string, stats: Stats) => boolean;
+	type CacheFilter = (path: string, stats: BigIntStats) => boolean;
 
 	type CacheOptions = Partial<{
-
 		/**
 		 * Filter for cached elements, by default all elements are cached
 		 */
@@ -107,15 +90,14 @@ declare namespace recache {
 	}>;
 
 	type List = string[];
-
 	type ListFilter = (location: string, index: number, list: List) => boolean;
-
-	type UserData = {
-		[key: string]: any
-	};
+	type VoidListener = () => void;
+	type CacheDirectoryListener = (directory: Readonly<CacheDirectory>) => void;
+	type CacheFileListener = (file: Readonly<CacheFile>) => void;
+	type CacheElementListener = (element: Readonly<CacheElement>) => void;
+	type ErrorListener = (error: Error) => void;
 
 	interface Cache extends EventEmitter {
-
 		/**
 		 * Container to store user data
 		 */
@@ -149,7 +131,7 @@ declare namespace recache {
 		/**
 		 * Add a listener for change event
 		 */
-		addListener(event: 'change', listener: CacheElementEventListener): this;
+		addListener(event: 'change', listener: CacheElementListener): this;
 
 		/**
 		 * Add a listener for destroy event
@@ -159,39 +141,77 @@ declare namespace recache {
 		/**
 		 * Add a listener for directory event
 		 */
-		addListener(event: 'directory', listener: DirectoryEventListener): this;
+		addListener(event: 'directory', listener: CacheDirectoryListener): this;
 
 		/**
 		 * Add a listener for error event
 		 */
-		addListener(event: 'error', listener: ErrorEventListener): this;
+		addListener(event: 'error', listener: ErrorListener): this;
 
 		/**
 		 * Add a listener for file event
 		 */
-		addListener(event: 'file', listener: FileEventListener): this;
+		addListener(event: 'file', listener: CacheFileListener): this;
 
 		/**
 		 * Add a listener for ready event
 		 */
-		addListener(event: 'ready', listener: CacheEventListener): this;
+		addListener(event: 'ready', listener: (cache: Cache) => void): this;
 
 		/**
 		 * Add a listener for unlink event
 		 */
-		addListener(event: 'unlink', listener: CacheElementEventListener): this;
+		addListener(event: 'unlink', listener: CacheElementListener): this;
 
 		/**
 		 * Add a listener for update event
 		 */
-		addListener(event: 'update', listener: CacheEventListener): this;
+		addListener(event: 'update', listener: (cache: Cache) => void): this;
 
-		// TODO: In Node 10+ add support for .off() method
+		/**
+		 * Remove a listener for change event
+		 */
+		off(event: 'change', listener: CacheElementListener): this;
+
+		/**
+		 * Remove a listener for destroy event
+		 */
+		off(event: 'destroy', listener: VoidListener): this;
+
+		/**
+		 * Remove a listener for directory event
+		 */
+		off(event: 'directory', listener: CacheDirectoryListener): this;
+
+		/**
+		 * Remove a listener for error event
+		 */
+		off(event: 'error', listener: ErrorListener): this;
+
+		/**
+		 * Remove a listener for file event
+		 */
+		off(event: 'file', listener: CacheFileListener): this;
+
+		/**
+		 * Remove a listener for ready event
+		 */
+		off(event: 'ready', listener: (cache: Cache) => void): this;
+
+		/**
+		 * Remove a listener for unlink event
+		 */
+		off(event: 'unlink', listener: CacheElementListener): this;
+
+		/**
+		 * Remove a listener for update event
+		 */
+		off(event: 'update', listener: (cache: Cache) => void): this;
 
 		/**
 		 * Add a listener for change event
 		 */
-		on(event: 'change', listener: CacheElementEventListener): this;
+		on(event: 'change', listener: CacheElementListener): this;
 
 		/**
 		 * Add a listener for destroy event
@@ -201,37 +221,37 @@ declare namespace recache {
 		/**
 		 * Add a listener for directory event
 		 */
-		on(event: 'directory', listener: DirectoryEventListener): this;
+		on(event: 'directory', listener: CacheDirectoryListener): this;
 
 		/**
 		 * Add a listener for error event
 		 */
-		on(event: 'error', listener: ErrorEventListener): this;
+		on(event: 'error', listener: ErrorListener): this;
 
 		/**
 		 * Add a listener for file event
 		 */
-		on(event: 'file', listener: FileEventListener): this;
+		on(event: 'file', listener: CacheFileListener): this;
 
 		/**
 		 * Add a listener for ready event
 		 */
-		on(event: 'ready', listener: CacheEventListener): this;
+		on(event: 'ready', listener: (cache: Cache) => void): this;
 
 		/**
 		 * Add a listener for unlink event
 		 */
-		on(event: 'unlink', listener: CacheElementEventListener): this;
+		on(event: 'unlink', listener: CacheElementListener): this;
 
 		/**
 		 * Add a listener for update event
 		 */
-		on(event: 'update', listener: CacheEventListener): this;
+		on(event: 'update', listener: (cache: Cache) => void): this;
 
 		/**
 		 * Add an one-time listener for change event
 		 */
-		once(event: 'change', listener: CacheElementEventListener): this;
+		once(event: 'change', listener: CacheElementListener): this;
 
 		/**
 		 * Add an one-time listener for destroy event
@@ -241,37 +261,37 @@ declare namespace recache {
 		/**
 		 * Add an one-time listener for directory event
 		 */
-		once(event: 'directory', listener: DirectoryEventListener): this;
+		once(event: 'directory', listener: CacheDirectoryListener): this;
 
 		/**
 		 * Add an one-time listener for error event
 		 */
-		once(event: 'error', listener: ErrorEventListener): this;
+		once(event: 'error', listener: ErrorListener): this;
 
 		/**
 		 * Add an one-time listener for file event
 		 */
-		once(event: 'file', listener: FileEventListener): this;
+		once(event: 'file', listener: CacheFileListener): this;
 
 		/**
 		 * Add an one-time listener for ready event
 		 */
-		once(event: 'ready', listener: CacheEventListener): this;
+		once(event: 'ready', listener: (cache: Cache) => void): this;
 
 		/**
 		 * Add an one-time listener for unlink event
 		 */
-		once(event: 'unlink', listener: CacheElementEventListener): this;
+		once(event: 'unlink', listener: CacheElementListener): this;
 
 		/**
 		 * Add an one-time listener for update event
 		 */
-		once(event: 'update', listener: CacheEventListener): this;
+		once(event: 'update', listener: (cache: Cache) => void): this;
 
 		/**
 		 * Prepend a listener for change event
 		 */
-		prependListener(event: 'change', listener: CacheElementEventListener): this;
+		prependListener(event: 'change', listener: CacheElementListener): this;
 
 		/**
 		 * Prepend a listener for destroy event
@@ -281,37 +301,46 @@ declare namespace recache {
 		/**
 		 * Prepend a listener for directory event
 		 */
-		prependListener(event: 'directory', listener: DirectoryEventListener): this;
+		prependListener(
+			event: 'directory',
+			listener: CacheDirectoryListener
+		): this;
 
 		/**
 		 * Prepend a listener for error event
 		 */
-		prependListener(event: 'error', listener: ErrorEventListener): this;
+		prependListener(event: 'error', listener: ErrorListener): this;
 
 		/**
 		 * Prepend a listener for file event
 		 */
-		prependListener(event: 'file', listener: FileEventListener): this;
+		prependListener(event: 'file', listener: CacheFileListener): this;
 
 		/**
 		 * Prepend a listener for ready event
 		 */
-		prependListener(event: 'ready', listener: CacheEventListener): this;
+		prependListener(event: 'ready', listener: (cache: Cache) => void): this;
 
 		/**
 		 * Prepend a listener for unlink event
 		 */
-		prependListener(event: 'unlink', listener: CacheElementEventListener): this;
+		prependListener(event: 'unlink', listener: CacheElementListener): this;
 
 		/**
 		 * Prepend a listener for update event
 		 */
-		prependListener(event: 'update', listener: CacheEventListener): this;
+		prependListener(
+			event: 'update',
+			listener: (cache: Cache) => void
+		): this;
 
 		/**
 		 * Prepend an one-time listener for change event
 		 */
-		prependOnceListener(event: 'change', listener: CacheElementEventListener): this;
+		prependOnceListener(
+			event: 'change',
+			listener: CacheElementListener
+		): this;
 
 		/**
 		 * Prepend an one-time listener for destroy event
@@ -321,32 +350,44 @@ declare namespace recache {
 		/**
 		 * Prepend an one-time listener for directory event
 		 */
-		prependOnceListener(event: 'directory', listener: DirectoryEventListener): this;
+		prependOnceListener(
+			event: 'directory',
+			listener: CacheDirectoryListener
+		): this;
 
 		/**
 		 * Prepend an one-time listener for error event
 		 */
-		prependOnceListener(event: 'error', listener: ErrorEventListener): this;
+		prependOnceListener(event: 'error', listener: ErrorListener): this;
 
 		/**
 		 * Prepend an one-time listener for file event
 		 */
-		prependOnceListener(event: 'file', listener: FileEventListener): this;
+		prependOnceListener(event: 'file', listener: CacheFileListener): this;
 
 		/**
 		 * Prepend an one-time listener for ready event
 		 */
-		prependOnceListener(event: 'ready', listener: CacheEventListener): this;
+		prependOnceListener(
+			event: 'ready',
+			listener: (cache: Cache) => void
+		): this;
 
 		/**
 		 * Prepend an one-time listener for unlink event
 		 */
-		prependOnceListener(event: 'unlink', listener: CacheElementEventListener): this;
+		prependOnceListener(
+			event: 'unlink',
+			listener: CacheElementListener
+		): this;
 
 		/**
 		 * Prepend an one-time listener for update event
 		 */
-		prependOnceListener(event: 'update', listener: CacheEventListener): this;
+		prependOnceListener(
+			event: 'update',
+			listener: (cache: Cache) => void
+		): this;
 
 		/**
 		 * Remove all listeners for change event
@@ -391,7 +432,7 @@ declare namespace recache {
 		/**
 		 * Remove a listener for change event
 		 */
-		removeListener(event: 'change', listener: CacheElementEventListener): this;
+		removeListener(event: 'change', listener: CacheElementListener): this;
 
 		/**
 		 * Remove a listener for destroy event
@@ -401,49 +442,64 @@ declare namespace recache {
 		/**
 		 * Remove a listener for directory event
 		 */
-		removeListener(event: 'directory', listener: DirectoryEventListener): this;
+		removeListener(
+			event: 'directory',
+			listener: CacheDirectoryListener
+		): this;
 
 		/**
 		 * Remove a listener for error event
 		 */
-		removeListener(event: 'error', listener: ErrorEventListener): this;
+		removeListener(event: 'error', listener: ErrorListener): this;
 
 		/**
 		 * Remove a listener for file event
 		 */
-		removeListener(event: 'file', listener: FileEventListener): this;
+		removeListener(event: 'file', listener: CacheFileListener): this;
 
 		/**
 		 * Remove a listener for ready event
 		 */
-		removeListener(event: 'ready', listener: CacheEventListener): this;
+		removeListener(event: 'ready', listener: (cache: Cache) => void): this;
 
 		/**
 		 * Remove a listener for unlink event
 		 */
-		removeListener(event: 'unlink', listener: CacheElementEventListener): this;
+		removeListener(event: 'unlink', listener: CacheElementListener): this;
 
 		/**
 		 * Remove a listener for update event
 		 */
-		removeListener(event: 'update', listener: CacheEventListener): this;
+		removeListener(event: 'update', listener: (cache: Cache) => void): this;
 	}
+
+	type CacheCallback = (cache: Cache) => void;
 }
 
 /**
  * Create and start a file system cache
  */
-declare function recache(path: string, options: recache.CacheOptions, callback: recache.CacheCallback): recache.Cache;
+declare function recache(
+	path: string,
+	options: recache.CacheOptions,
+	callback: recache.CacheCallback
+): recache.Cache;
 
 /**
  * Create and start a file system cache
  */
-declare function recache(path: string, options: recache.CacheOptions): recache.Cache;
+declare function recache(
+	path: string,
+	options: recache.CacheOptions
+): recache.Cache;
 
 /**
  * Create and start a file system cache
  */
-declare function recache(path: string, callback: recache.CacheCallback): recache.Cache;
+declare function recache(
+	path: string,
+	callback: recache.CacheCallback
+): recache.Cache;
 
 /**
  * Create and start a file system cache

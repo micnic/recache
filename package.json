@@ -26,21 +26,25 @@
 	],
 	"types": "index.d.ts",
 	"scripts": {
-		"prepublishOnly": "npm test && npm run ts-check",
+		"check": "npm run eslint-check && npm run ts-check",
+		"eslint-check": "eslint . --ext .js,.ts",
+		"eslint-fix": "npm run eslint-check -- --fix",
+		"prepublishOnly": "npm test && npm run check",
 		"test": "tap -b test/*.test.js",
 		"test-cov-html": "npm test -- --coverage-report=html",
-		"test-only": "npm test -- -O",
-		"ts-check": "tsc -p jsconfig.json"
+		"test-lcov": "npm test -- --coverage-report=lcov",
+		"ts-check": "tsc"
 	},
 	"devDependencies": {
-		"@types/node": "8.x",
+		"@types/node": "12.x",
+		"@typescript-eslint/eslint-plugin": "4.x",
+		"@typescript-eslint/parser": "4.x",
 		"eslint": "7.x",
-		"jsinspect": "0.12.x",
 		"rimraf": "3.x",
-		"tap": "14.x",
+		"tap": "15.x",
 		"typescript": "4.x"
 	},
 	"engines": {
-		"node": ">=8.0"
+		"node": ">=10.0"
 	}
 }
