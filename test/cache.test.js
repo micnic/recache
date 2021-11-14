@@ -11,10 +11,13 @@ const {
 } = require('fs');
 const { join, relative } = require('path');
 const rimraf = require('rimraf');
-const { equal, fail, match, ok, teardown, test } = require('tap');
+const { equal, fail, match, ok, teardown, test, throws } = require('tap');
 const { promisify } = require('util');
 
 const Cache = require('recache/lib/cache');
+
+// Timeout for fs operations to work fine in CI
+const timeout = 1000;
 
 const nonExistent = 'non-existent';
 const testDir = join(__dirname, 'test-dir');
@@ -52,6 +55,18 @@ test('Cache.normalizeLocation()', ({ end }) => {
 	end();
 });
 
+test('new Cache(): Invalid parameters', ({ end }) => {
+
+	throws(() => {
+		const cache = new Cache();
+
+		cache.on('ready', () => {
+			fail('Cache should never be ready for invalid parameters');
+		});
+	}, TypeError('"path" argument must be a non-empty string'));
+
+	end();
+});
 
 test('new Cache(): Non-existent element', ({ end }) => {
 
@@ -99,9 +114,7 @@ test('new Cache(): Cache file with error', async ({ end }) => {
 
 	await promisify(writeFile)(path, '');
 
-	const cache = new Cache(path, {
-		store: true
-	});
+	const cache = new Cache(path, { store: true });
 
 	return new Promise((resolve) => {
 		cache.on('destroy', () => {
@@ -172,9 +185,7 @@ test('new Cache(): Non-empty directory with store', ({ end }) => {
 
 	const path = join(testDir, 'dir');
 
-	const cache = new Cache(path, {
-		store: true
-	});
+	const cache = new Cache(path, { store: true });
 
 	cache.on('destroy', () => {
 		end();
@@ -207,9 +218,7 @@ test('new Cache(): Root file', ({ end }) => {
 test('new Cache(): Remove root directory on ready', ({ end }) => {
 
 	const path = join(testDir, 'empty-dir');
-	const cache = new Cache(path, {
-		persistent: true
-	});
+	const cache = new Cache(path, { persistent: true });
 
 	cache.on('destroy', () => {
 		end();
@@ -226,9 +235,7 @@ test('new Cache(): Modify root file before ready', ({ end }) => {
 
 	const path = join(testDir, 'dir', 'file');
 
-	const cache = new Cache(path, {
-		persistent: true
-	});
+	const cache = new Cache(path, { persistent: true });
 
 	cache.on('change', (element) => {
 		equal(element.location, '<root>');
@@ -250,12 +257,16 @@ test('new Cache(): Modify root file on ready', ({ end }) => {
 
 	const path = join(testDir, 'dir', 'file');
 
-	const cache = new Cache(path);
+	const cache = new Cache(path, { persistent: true }, (c) => {
+		equal(cache, c);
+	});
 
 	cache.on('destroy', () => {
 		end();
-	}).on('ready', async () => {
-		await promisify(writeFile)(path, 'data');
+	}).on('ready', () => {
+		setTimeout(async () => {
+			await promisify(writeFile)(path, 'data');
+		}, timeout);
 	}).on('update', (c) => {
 		equal(cache, c);
 		cache.destroy();
@@ -290,6 +301,19 @@ test('Cache.prototype.destroy()', ({ end }) => {
 	}).on('ready', () => {
 		cache.destroy();
 		cache.destroy(); // Check for errors when calling destroy twice
+	});
+});
+
+test('Cache.prototype.destroy() with callback', ({ end }) => {
+
+	const cache = new Cache(testDir);
+
+	cache.on('error', (error) => {
+		fail(error.message);
+	}).on('ready', () => {
+		cache.destroy(() => {
+			end();
+		});
 	});
 });
 
@@ -346,6 +370,21 @@ test('Cache.prototype.list()', ({ end }) => {
 		cache.destroy();
 
 		match(c.list(), []);
+	});
+});
+
+test('Cache.prototype.stop() + .start()', ({ end }) => {
+
+	const path = join(testDir, 'dir');
+
+	const cache = new Cache(path);
+
+	cache.stop().start(() => {
+		cache.destroy();
+	}).on('destroy', () => {
+		end();
+	}).on('error', (error) => {
+		fail(error.message);
 	});
 });
 

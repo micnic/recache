@@ -1,6 +1,10 @@
 <img src="https://raw.github.com/micnic/recache/master/logo.png"/>
 
-# 0.5.3
+[![npm version](https://img.shields.io/npm/v/recache.svg?logo=npm&style=flat-square)](https://www.npmjs.com/package/recache)
+[![npm downloads](https://img.shields.io/npm/dm/recache.svg?style=flat-square)](https://www.npmjs.com/package/recache)
+[![npm types](https://img.shields.io/npm/types/recache.svg?style=flat-square)](https://www.npmjs.com/package/recache)
+[![node version](https://img.shields.io/node/v/recache.svg?style=flat-square)](https://www.npmjs.com/package/recache)
+[![license](https://img.shields.io/npm/l/recache.svg?style=flat-square)](https://www.npmjs.com/package/recache)
 
 `recache` is a file system cache, it watches recursively a directory tree or a
 file content and updates the data on changes, optionally it may provide the
@@ -19,9 +23,6 @@ watching for fs changes in multiple locations and calling functions on specific
 events, `recache` is about watching a single directory tree or file and also
 reading its paths, stats and content directly using only its API. `recache` is a
 pure JS solution and does not require any code compilation on installation.
-
-#### Any feedback is welcome!
-#### Works with node.js 8.0+!
 
 ## Installation
 
@@ -102,6 +103,20 @@ filter: (location: string, index: number, list: string[]) => boolean
 List all possible readable sources with an optional parameter to filter
 elements. If no filter parameter is provided then all readable elements of the
 cache are returned as an array of strings.
+
+`.start([callback])`
+
+callback: (cache: recache.Cache) => void
+
+Starts the cache, this method is called automatically when the cache is created,
+it is not necessary to call it manually. It may be called only after the cache
+was stopped. This method accepts a callback function which is executed only once
+when the cache is started.
+
+`.stop()`
+
+Stops watching the file system for changes, this method is called automatically
+when the cache is destroyed, it is not necessary to call it manually.
 
 `.destroy()`
 
