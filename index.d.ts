@@ -480,30 +480,15 @@ declare namespace recache {
  * Create and start a file system cache
  */
 declare function recache(
-	path: string,
-	options: recache.CacheOptions,
-	callback: recache.CacheCallback
+	...args:
+		| [path: string]
+		| [path: string, options: recache.CacheOptions]
+		| [path: string, callback: recache.CacheCallback]
+		| [
+			path: string,
+			options: recache.CacheOptions,
+			callback: recache.CacheCallback
+		]
 ): recache.Cache;
-
-/**
- * Create and start a file system cache
- */
-declare function recache(
-	path: string,
-	options: recache.CacheOptions
-): recache.Cache;
-
-/**
- * Create and start a file system cache
- */
-declare function recache(
-	path: string,
-	callback: recache.CacheCallback
-): recache.Cache;
-
-/**
- * Create and start a file system cache
- */
-declare function recache(path: string): recache.Cache;
 
 export = recache;
