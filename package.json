@@ -1,6 +1,6 @@
 {
 	"name": "recache",
-	"version": "0.5.3",
+	"version": "0.6.0",
 	"description": "File system cache that listens to file changes",
 	"keywords": [
 		"cache",

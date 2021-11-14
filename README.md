@@ -1,6 +1,10 @@
 <img src="https://raw.github.com/micnic/recache/master/logo.png"/>
 
-# 0.5.3
+[![npm version](https://img.shields.io/npm/v/recache.svg?logo=npm&style=flat-square)](https://www.npmjs.com/package/recache)
+[![npm downloads](https://img.shields.io/npm/dm/recache.svg?style=flat-square)](https://www.npmjs.com/package/recache)
+[![npm types](https://img.shields.io/npm/types/recache.svg?style=flat-square)](https://www.npmjs.com/package/recache)
+[![node version](https://img.shields.io/node/v/recache.svg?style=flat-square)](https://www.npmjs.com/package/recache)
+[![license](https://img.shields.io/npm/l/recache.svg?style=flat-square)](https://www.npmjs.com/package/recache)
 
 `recache` is a file system cache, it watches recursively a directory tree or a
 file content and updates the data on changes, optionally it may provide the
@@ -21,7 +25,7 @@ reading its paths, stats and content directly using only its API. `recache` is a
 pure JS solution and does not require any code compilation on installation.
 
 #### Any feedback is welcome!
-#### Works with node.js 8.0+!
+#### Works with node.js 10.0+!
 
 ## Installation
 
