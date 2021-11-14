@@ -74,7 +74,7 @@ declare namespace recache {
 		/**
 		 * Filter for cached elements, by default all elements are cached
 		 */
-		filter: CacheFilter;
+		filter: CacheFilter | null;
 
 		/**
 		 * Flag to enable persistence of file system watchers

@@ -34,62 +34,6 @@ test('Init tests', async ({ end }) => {
 	end();
 });
 
-test('Cache.prepareArgs()', ({ end }) => {
-
-	try {
-		Cache.prepareArgs();
-		fail('Method should fail');
-	} catch (error) {
-		ok(error instanceof Error);
-	}
-
-	match(Cache.prepareArgs('path'), {
-		options: {},
-		path: 'path'
-	});
-
-	match(Cache.prepareArgs('path', null), {
-		options: {},
-		path: 'path'
-	});
-
-	const callback = () => null;
-
-	match(Cache.prepareArgs('path', null, callback), {
-		callback,
-		options: {},
-		path: 'path'
-	});
-
-	match(Cache.prepareArgs('path', {}), {
-		options: {},
-		path: 'path'
-	});
-
-	const filter = () => true;
-
-	match(Cache.prepareArgs('path', {
-		filter,
-		persistent: true,
-		store: true
-	}), {
-		options: {
-			filter,
-			persistent: true,
-			store: true
-		},
-		path: 'path'
-	});
-
-	match(Cache.prepareArgs('path', callback), {
-		callback,
-		options: {},
-		path: 'path'
-	});
-
-	end();
-});
-
 test('Cache.normalizeLocation()', ({ end }) => {
 
 	try {

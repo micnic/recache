@@ -102,7 +102,10 @@
 		"no-unsafe-negation": "error",
 		"no-unused-expressions": "error",
 		"no-unused-vars": "off",
-		"no-use-before-define": ["error", { "variables": false }],
+		"no-use-before-define": [
+			"error",
+			{ "classes": false, "variables": false }
+		],
 		"no-useless-call": "error",
 		"no-useless-concat": "error",
 		"no-useless-rename": "error",
